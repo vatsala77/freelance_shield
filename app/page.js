@@ -1,65 +1,115 @@
-import Image from "next/image";
+'use client'
+import Link from 'next/link'
 
 export default function Home() {
   return (
-    <div className="flex flex-col flex-1 items-center justify-center bg-zinc-50 font-sans dark:bg-black">
-      <main className="flex flex-1 w-full max-w-3xl flex-col items-center justify-between py-32 px-16 bg-white dark:bg-black sm:items-start">
-        <Image
-          className="dark:invert"
-          src="/next.svg"
-          alt="Next.js logo"
-          width={100}
-          height={20}
-          priority
-        />
-        <div className="flex flex-col items-center gap-6 text-center sm:items-start sm:text-left">
-          <h1 className="max-w-xs text-3xl font-semibold leading-10 tracking-tight text-black dark:text-zinc-50">
-            To get started, edit the page.js file.
-          </h1>
-          <p className="max-w-md text-lg leading-8 text-zinc-600 dark:text-zinc-400">
-            Looking for a starting point or more instructions? Head over to{" "}
-            <a
-              href="https://vercel.com/templates?framework=next.js&utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-              className="font-medium text-zinc-950 dark:text-zinc-50"
-            >
-              Templates
-            </a>{" "}
-            or the{" "}
-            <a
-              href="https://nextjs.org/learn?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-              className="font-medium text-zinc-950 dark:text-zinc-50"
-            >
-              Learning
-            </a>{" "}
-            center.
-          </p>
+    <div style={{ background: '#f5f5f0', minHeight: '100vh', fontFamily: 'sans-serif' }}>
+
+      {/* Navbar */}
+      <nav style={{ background: 'white', display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: '16px 40px', borderBottom: '1px solid #e5e5e5' }}>
+        <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
+          <span style={{ background: '#1D9E75', color: 'white', width: '32px', height: '32px', borderRadius: '8px', display: 'flex', alignItems: 'center', justifyContent: 'center', fontWeight: 700, fontSize: '16px' }}>F</span>
+          <span style={{ fontWeight: 600, color: '#111', fontSize: '16px' }}>FreelanceShield</span>
         </div>
-        <div className="flex flex-col gap-4 text-base font-medium sm:flex-row">
-          <a
-            className="flex h-12 w-full items-center justify-center gap-2 rounded-full bg-foreground px-5 text-background transition-colors hover:bg-[#383838] dark:hover:bg-[#ccc] md:w-[158px]"
-            href="https://vercel.com/new?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-            target="_blank"
-            rel="noopener noreferrer"
-          >
-            <Image
-              className="dark:invert"
-              src="/vercel.svg"
-              alt="Vercel logomark"
-              width={16}
-              height={16}
-            />
-            Deploy Now
-          </a>
-          <a
-            className="flex h-12 w-full items-center justify-center rounded-full border border-solid border-black/[.08] px-5 transition-colors hover:border-transparent hover:bg-black/[.04] dark:border-white/[.145] dark:hover:bg-[#1a1a1a] md:w-[158px]"
-            href="https://nextjs.org/docs?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-            target="_blank"
-            rel="noopener noreferrer"
-          >
-            Documentation
+        <div style={{ display: 'flex', gap: '16px', alignItems: 'center' }}>
+          <Link href="/dashboard">
+            <span style={{ color: '#888', fontSize: '14px', cursor: 'pointer' }}>Dashboard</span>
+          </Link>
+          <Link href="/create">
+            <button style={{ background: '#1D9E75', color: 'white', border: 'none', padding: '10px 20px', borderRadius: '8px', cursor: 'pointer', fontWeight: 600, fontSize: '14px' }}>
+              New Project
+            </button>
+          </Link>
+        </div>
+      </nav>
+
+      {/* Hero */}
+      <section style={{ maxWidth: '800px', margin: '0 auto', padding: '80px 20px', textAlign: 'center' }}>
+        <div style={{ display: 'inline-block', background: '#e8f5ef', color: '#1D9E75', padding: '6px 16px', borderRadius: '20px', fontSize: '13px', fontWeight: 500, marginBottom: '24px' }}>
+          🛡️ Built for Indian freelancers
+        </div>
+        <h1 style={{ fontSize: '56px', fontWeight: 700, color: '#111', margin: '0 0 20px', lineHeight: 1.1 }}>
+          Get Paid. <span style={{ color: '#1D9E75' }}>Every Time.</span>
+        </h1>
+        <p style={{ fontSize: '18px', color: '#888', maxWidth: '520px', margin: '0 auto 36px', lineHeight: 1.6 }}>
+          Client money locks upfront. Releases only when you approve the work. 2% fee. No drama.
+        </p>
+        <div style={{ display: 'flex', gap: '12px', justifyContent: 'center', flexWrap: 'wrap', marginBottom: '16px' }}>
+          <Link href="/create">
+            <button style={{ background: '#1D9E75', color: 'white', border: 'none', padding: '14px 32px', borderRadius: '8px', cursor: 'pointer', fontWeight: 600, fontSize: '16px' }}>
+              Start a Project →
+            </button>
+          </Link>
+          <a href="#how">
+            <button style={{ background: 'white', color: '#111', border: '1px solid #e5e5e5', padding: '14px 32px', borderRadius: '8px', cursor: 'pointer', fontWeight: 500, fontSize: '16px' }}>
+              See how it works
+            </button>
           </a>
         </div>
-      </main>
+        <p style={{ color: '#888', fontSize: '13px', margin: 0 }}>
+          🔒 Powered by Razorpay Route · RBI compliant escrow
+        </p>
+      </section>
+
+      {/* How it works */}
+      <section id="how" style={{ background: 'white', padding: '80px 20px' }}>
+        <div style={{ maxWidth: '900px', margin: '0 auto' }}>
+          <p style={{ textAlign: 'center', color: '#888', fontSize: '13px', fontWeight: 600, textTransform: 'uppercase', letterSpacing: '0.05em', margin: '0 0 12px' }}>HOW IT WORKS</p>
+          <h2 style={{ textAlign: 'center', fontSize: '36px', fontWeight: 700, color: '#111', margin: '0 0 48px' }}>
+            Four simple steps from project to paycheck — no chasing, no invoices.
+          </h2>
+          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(4, 1fr)', gap: '24px' }}>
+            {[
+              { num: '1', title: 'Create the project', desc: 'Define milestones, amounts, and timelines in 2 minutes.' },
+              { num: '2', title: 'Client pays into escrow', desc: 'Funds are locked the moment the client clicks pay.' },
+              { num: '3', title: 'Submit your work', desc: 'Deliver each milestone and notify the client instantly.' },
+              { num: '4', title: 'Approve & release', desc: 'Client approves — money lands in your bank in hours.' },
+            ].map(s => (
+              <div key={s.num} style={{ background: '#f9f9f9', borderRadius: '12px', padding: '24px' }}>
+                <div style={{ background: '#1D9E75', color: 'white', width: '32px', height: '32px', borderRadius: '8px', display: 'flex', alignItems: 'center', justifyContent: 'center', fontWeight: 700, marginBottom: '16px' }}>
+                  {s.num}
+                </div>
+                <h4 style={{ margin: '0 0 8px', color: '#111', fontSize: '15px' }}>{s.title}</h4>
+                <p style={{ margin: 0, color: '#888', fontSize: '13px', lineHeight: 1.5 }}>{s.desc}</p>
+              </div>
+            ))}
+          </div>
+        </div>
+      </section>
+
+      {/* Stats */}
+      <section style={{ padding: '80px 20px' }}>
+        <div style={{ maxWidth: '700px', margin: '0 auto', display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: '24px' }}>
+          {[
+            { val: '2%', label: 'Only fee', sub: 'No hidden charges. Ever.' },
+            { val: '0', label: 'Ghosting', sub: "Money's already in escrow." },
+            { val: '100%', label: 'Payment protection', sub: 'RBI-compliant escrow account.' },
+          ].map(s => (
+            <div key={s.label} style={{ background: 'white', border: '1px solid #e5e5e5', borderRadius: '12px', padding: '28px', textAlign: 'center' }}>
+              <p style={{ margin: '0 0 4px', fontSize: '40px', fontWeight: 700, color: '#1D9E75' }}>{s.val}</p>
+              <p style={{ margin: '0 0 6px', fontWeight: 600, color: '#111', fontSize: '15px' }}>{s.label}</p>
+              <p style={{ margin: 0, color: '#888', fontSize: '12px' }}>{s.sub}</p>
+            </div>
+          ))}
+        </div>
+      </section>
+
+      {/* CTA Bottom */}
+      <section style={{ background: '#111', padding: '80px 20px', textAlign: 'center' }}>
+        <h2 style={{ color: 'white', fontSize: '36px', fontWeight: 700, margin: '0 0 12px' }}>Stop chasing invoices.</h2>
+        <p style={{ color: '#888', fontSize: '16px', margin: '0 0 32px' }}>Set up your first escrow project in under 2 minutes.</p>
+        <Link href="/create">
+          <button style={{ background: '#1D9E75', color: 'white', border: 'none', padding: '16px 40px', borderRadius: '8px', cursor: 'pointer', fontWeight: 600, fontSize: '16px', marginBottom: '16px' }}>
+            Start a Project →
+          </button>
+        </Link>
+        <div style={{ display: 'flex', justifyContent: 'center', gap: '24px', flexWrap: 'wrap' }}>
+          {['No setup fees', 'No subscription', 'Cancel anytime'].map(t => (
+            <span key={t} style={{ color: '#888', fontSize: '13px' }}>✓ {t}</span>
+          ))}
+        </div>
+      </section>
+
     </div>
-  );
+  )
 }
