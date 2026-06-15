@@ -1,6 +1,7 @@
 'use client'
 import { useState } from 'react'
 import Link from 'next/link'
+import { signOut } from 'next-auth/react'
 
 const projects = [
   {
@@ -44,18 +45,49 @@ export default function Dashboard() {
     <div style={{ background: '#f5f5f0', minHeight: '100vh', fontFamily: 'sans-serif' }}>
 
       {/* Navbar */}
-      <nav style={{ background: 'white', display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: '16px 40px', borderBottom: '1px solid #e5e5e5' }}>
-        <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
-          <span style={{ background: '#1D9E75', color: 'white', width: '32px', height: '32px', borderRadius: '8px', display: 'flex', alignItems: 'center', justifyContent: 'center', fontWeight: 700 }}>F</span>
+      <nav style={{
+        background: 'white',
+        display: 'flex',
+        justifyContent: 'space-between',
+        alignItems: 'center',
+        padding: '16px 40px',
+        borderBottom: '1px solid #e5e5e5',
+        flexWrap: 'nowrap',
+        position: 'sticky',
+        top: 0,
+        zIndex: 100
+      }}>
+        {/* Logo */}
+        <div style={{ display: 'flex', alignItems: 'center', gap: '10px', flexShrink: 0 }}>
+          <span style={{
+            background: '#1D9E75', color: 'white', width: '32px', height: '32px',
+            borderRadius: '8px', display: 'flex', alignItems: 'center',
+            justifyContent: 'center', fontWeight: 700
+          }}>F</span>
           <span style={{ fontWeight: 600, color: '#111', fontSize: '16px' }}>FreelanceShield</span>
         </div>
-        <div style={{ display: 'flex', gap: '12px', alignItems: 'center' }}>
-          <span style={{ color: '#888', fontSize: '14px' }}>Dashboard</span>
+
+        {/* Nav Right */}
+        <div style={{ display: 'flex', gap: '12px', alignItems: 'center', flexShrink: 0 }}>
+          <span style={{ color: '#888', fontSize: '14px', whiteSpace: 'nowrap' }}>Dashboard</span>
           <Link href="/create">
-            <button style={{ background: '#1D9E75', color: 'white', border: 'none', padding: '10px 20px', borderRadius: '8px', cursor: 'pointer', fontWeight: 600, fontSize: '14px' }}>
+            <button style={{
+              background: '#1D9E75', color: 'white', border: 'none',
+              padding: '10px 20px', borderRadius: '8px', cursor: 'pointer',
+              fontWeight: 600, fontSize: '14px', whiteSpace: 'nowrap'
+            }}>
               New Project
             </button>
           </Link>
+          <button
+            onClick={() => signOut({ callbackUrl: '/login' })}
+            style={{
+              background: 'white', border: '1px solid #e5e5e5', color: '#111',
+              padding: '10px 16px', borderRadius: '8px', cursor: 'pointer',
+              fontWeight: 500, fontSize: '14px', whiteSpace: 'nowrap', flexShrink: 0
+            }}>
+            Logout
+          </button>
         </div>
       </nav>
 
@@ -68,7 +100,11 @@ export default function Dashboard() {
             <p style={{ margin: 0, color: '#888', fontSize: '14px' }}>Welcome back, Vatsala. Here's what's in escrow.</p>
           </div>
           <Link href="/create">
-            <button style={{ background: '#1D9E75', color: 'white', border: 'none', padding: '12px 20px', borderRadius: '8px', cursor: 'pointer', fontWeight: 600, fontSize: '14px' }}>
+            <button style={{
+              background: '#1D9E75', color: 'white', border: 'none',
+              padding: '12px 20px', borderRadius: '8px', cursor: 'pointer',
+              fontWeight: 600, fontSize: '14px', whiteSpace: 'nowrap'
+            }}>
               + New Project
             </button>
           </Link>
@@ -90,14 +126,20 @@ export default function Dashboard() {
         </div>
 
         {/* Filter Tabs */}
-        <div style={{ display: 'flex', gap: '8px', marginBottom: '16px' }}>
+        <div style={{ display: 'flex', gap: '8px', marginBottom: '16px', alignItems: 'center' }}>
           {['all', 'active', 'completed'].map(f => (
             <button key={f} onClick={() => setFilter(f)}
-              style={{ padding: '6px 16px', borderRadius: '20px', border: '1px solid #e5e5e5', background: filter === f ? '#111' : 'white', color: filter === f ? 'white' : '#888', cursor: 'pointer', fontSize: '13px', fontWeight: 500, textTransform: 'capitalize' }}>
+              style={{
+                padding: '6px 16px', borderRadius: '20px', border: '1px solid #e5e5e5',
+                background: filter === f ? '#111' : 'white',
+                color: filter === f ? 'white' : '#888',
+                cursor: 'pointer', fontSize: '13px', fontWeight: 500,
+                textTransform: 'capitalize', whiteSpace: 'nowrap'
+              }}>
               {f}
             </button>
           ))}
-          <span style={{ marginLeft: 'auto', color: '#888', fontSize: '13px', alignSelf: 'center' }}>{filtered.length} total</span>
+          <span style={{ marginLeft: 'auto', color: '#888', fontSize: '13px' }}>{filtered.length} total</span>
         </div>
 
         {/* Project List */}
@@ -105,19 +147,30 @@ export default function Dashboard() {
           {filtered.map((p, i) => (
             <div key={p.id} style={{ padding: '20px 24px', borderBottom: i < filtered.length - 1 ? '1px solid #f0f0f0' : 'none' }}>
               <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: '12px' }}>
-                <div>
-                  <div style={{ display: 'flex', alignItems: 'center', gap: '10px', marginBottom: '4px' }}>
+                <div style={{ flex: 1, minWidth: 0, marginRight: '16px' }}>
+                  <div style={{ display: 'flex', alignItems: 'center', gap: '10px', marginBottom: '4px', flexWrap: 'wrap' }}>
                     <span style={{ fontWeight: 500, color: '#111', fontSize: '15px' }}>{p.title}</span>
-                    <span style={{ background: p.status === 'active' ? '#e8f5ef' : '#f0f0f0', color: p.status === 'active' ? '#1D9E75' : '#888', padding: '2px 10px', borderRadius: '20px', fontSize: '12px', fontWeight: 500 }}>
+                    <span style={{
+                      background: p.status === 'active' ? '#e8f5ef' : '#f0f0f0',
+                      color: p.status === 'active' ? '#1D9E75' : '#888',
+                      padding: '2px 10px', borderRadius: '20px', fontSize: '12px', fontWeight: 500,
+                      whiteSpace: 'nowrap'
+                    }}>
                       {p.status === 'active' ? '● Active' : '✓ Completed'}
                     </span>
                   </div>
                   <p style={{ margin: 0, color: '#888', fontSize: '13px' }}>Client · {p.client}</p>
                 </div>
-                <div style={{ display: 'flex', alignItems: 'center', gap: '16px' }}>
-                  <span style={{ fontWeight: 600, color: '#111', fontSize: '16px' }}>₹{p.amount.toLocaleString('en-IN')}</span>
+                <div style={{ display: 'flex', alignItems: 'center', gap: '16px', flexShrink: 0 }}>
+                  <span style={{ fontWeight: 600, color: '#111', fontSize: '16px', whiteSpace: 'nowrap' }}>
+                    ₹{p.amount.toLocaleString('en-IN')}
+                  </span>
                   <Link href={`/pay/${p.token}`}>
-                    <button style={{ background: 'white', border: '1px solid #e5e5e5', color: '#111', padding: '6px 16px', borderRadius: '8px', cursor: 'pointer', fontSize: '13px', fontWeight: 500 }}>
+                    <button style={{
+                      background: 'white', border: '1px solid #e5e5e5', color: '#111',
+                      padding: '6px 16px', borderRadius: '8px', cursor: 'pointer',
+                      fontSize: '13px', fontWeight: 500, whiteSpace: 'nowrap'
+                    }}>
                       View ↗
                     </button>
                   </Link>
@@ -130,9 +183,13 @@ export default function Dashboard() {
                   {p.milestones.done} of {p.milestones.total} milestones
                 </span>
                 <div style={{ flex: 1, background: '#f0f0f0', borderRadius: '4px', height: '6px' }}>
-                  <div style={{ background: '#1D9E75', height: '6px', borderRadius: '4px', width: `${(p.milestones.done / p.milestones.total) * 100}%`, transition: 'width 0.3s' }} />
+                  <div style={{
+                    background: '#1D9E75', height: '6px', borderRadius: '4px',
+                    width: `${(p.milestones.done / p.milestones.total) * 100}%`,
+                    transition: 'width 0.3s'
+                  }} />
                 </div>
-                <span style={{ fontSize: '12px', color: '#888' }}>
+                <span style={{ fontSize: '12px', color: '#888', whiteSpace: 'nowrap' }}>
                   {Math.round((p.milestones.done / p.milestones.total) * 100)}%
                 </span>
               </div>
