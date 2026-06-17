@@ -2,9 +2,11 @@
 import { useState } from 'react'
 import Link from 'next/link'
 import { useRouter } from 'next/navigation'
+import { useSession } from 'next-auth/react'
 
 export default function CreateProject() {
   const router = useRouter()
+  const { data: session } = useSession()
   const [loading, setLoading] = useState(false)
   const [form, setForm] = useState({
     title: '',
@@ -37,6 +39,8 @@ export default function CreateProject() {
   const fee = Math.round(total * 0.05)
 
   async function handleSubmit() {
+    alert('BUTTON CLICKED - NEW CODE') 
+    console.log('Submit clicked!', { form, milestones, session })  // YE ADD KARO
     if (!form.title || !form.client_name || !form.client_email) {
       alert('Please fill all required fields')
       return
@@ -45,11 +49,34 @@ export default function CreateProject() {
       alert('Please fill all milestone titles and amounts')
       return
     }
+    if (!session?.user?.id) {
+      alert('Your session expired. Please log in again.')
+      router.push('/login')
+      return
+    }
+
     setLoading(true)
-    setTimeout(() => {
-      alert('Project created! Payment link generated.')
-      router.push('/dashboard')
-    }, 1500)
+    const res = await fetch('/api/projects', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ 
+        ...form, 
+        milestones, 
+        freelancer_id: session.user.id
+      }),
+    })
+    const data = await res.json()
+
+    if (!res.ok) {
+      alert('Error: ' + data.error)
+      setLoading(false)
+      return
+    }
+
+    setLoading(false)
+    const link = `${window.location.origin}/pay/${data.invite_token}`
+    alert(`Project created! Payment link:\n${link}`)
+    router.push('/dashboard')
   }
 
   return (

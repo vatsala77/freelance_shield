@@ -1,7 +1,11 @@
 'use client'
 import Link from 'next/link'
+import { useSession } from 'next-auth/react'
 
 export default function Home() {
+  const { status } = useSession()
+  const isLoggedIn = status === 'authenticated'
+
   return (
     <div style={{ background: '#f5f5f0', minHeight: '100vh', fontFamily: 'sans-serif' }}>
 
@@ -12,14 +16,19 @@ export default function Home() {
           <span style={{ fontWeight: 600, color: '#111', fontSize: '16px' }}>FreelanceShield</span>
         </div>
         <div style={{ display: 'flex', gap: '16px', alignItems: 'center' }}>
-          <Link href="/dashboard">
-            <span style={{ color: '#888', fontSize: '14px', cursor: 'pointer' }}>Dashboard</span>
-          </Link>
-          <Link href="/create">
-            <button style={{ background: '#1D9E75', color: 'white', border: 'none', padding: '10px 20px', borderRadius: '8px', cursor: 'pointer', fontWeight: 600, fontSize: '14px' }}>
-              New Project
-            </button>
-          </Link>
+          {isLoggedIn ? (
+            <Link href="/dashboard">
+              <button style={{ background: '#1D9E75', color: 'white', border: 'none', padding: '10px 20px', borderRadius: '8px', cursor: 'pointer', fontWeight: 600, fontSize: '14px' }}>
+                Go to Dashboard
+              </button>
+            </Link>
+          ) : (
+            <Link href="/login">
+              <button style={{ background: '#1D9E75', color: 'white', border: 'none', padding: '10px 20px', borderRadius: '8px', cursor: 'pointer', fontWeight: 600, fontSize: '14px' }}>
+                Sign In
+              </button>
+            </Link>
+          )}
         </div>
       </nav>
 
@@ -35,9 +44,9 @@ export default function Home() {
           Client money locks upfront. Releases only when you approve the work. 2% fee. No drama.
         </p>
         <div style={{ display: 'flex', gap: '12px', justifyContent: 'center', flexWrap: 'wrap', marginBottom: '16px' }}>
-          <Link href="/create">
+          <Link href={isLoggedIn ? "/dashboard" : "/login"}>
             <button style={{ background: '#1D9E75', color: 'white', border: 'none', padding: '14px 32px', borderRadius: '8px', cursor: 'pointer', fontWeight: 600, fontSize: '16px' }}>
-              Start a Project →
+              {isLoggedIn ? "Go to Dashboard →" : "Get Started →"}
             </button>
           </Link>
           <a href="#how">
@@ -98,9 +107,9 @@ export default function Home() {
       <section style={{ background: '#111', padding: '80px 20px', textAlign: 'center' }}>
         <h2 style={{ color: 'white', fontSize: '36px', fontWeight: 700, margin: '0 0 12px' }}>Stop chasing invoices.</h2>
         <p style={{ color: '#888', fontSize: '16px', margin: '0 0 32px' }}>Set up your first escrow project in under 2 minutes.</p>
-        <Link href="/create">
+        <Link href={isLoggedIn ? "/dashboard" : "/login"}>
           <button style={{ background: '#1D9E75', color: 'white', border: 'none', padding: '16px 40px', borderRadius: '8px', cursor: 'pointer', fontWeight: 600, fontSize: '16px', marginBottom: '16px' }}>
-            Start a Project →
+            {isLoggedIn ? "Go to Dashboard →" : "Get Started →"}
           </button>
         </Link>
         <div style={{ display: 'flex', justifyContent: 'center', gap: '24px', flexWrap: 'wrap' }}>

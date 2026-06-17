@@ -1,45 +1,67 @@
 'use client'
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 import Link from 'next/link'
-import { signOut } from 'next-auth/react'
-
-const projects = [
-  {
-    id: '1',
-    title: 'E-commerce Website Redesign',
-    client: 'Kavya Mehta',
-    amount: 145000,
-    status: 'active',
-    milestones: { done: 2, total: 4 },
-    token: 'demo'
-  },
-  {
-    id: '2',
-    title: 'Brand Identity & Logo System',
-    client: 'Nova Coffee Co.',
-    amount: 65000,
-    status: 'active',
-    milestones: { done: 1, total: 3 },
-    token: 'demo2'
-  },
-  {
-    id: '3',
-    title: 'Mobile App UI Design',
-    client: 'StartupX',
-    amount: 90000,
-    status: 'completed',
-    milestones: { done: 3, total: 3 },
-    token: 'demo3'
-  },
-]
+import { signOut, useSession } from 'next-auth/react'
+import { useRouter } from 'next/navigation'
 
 export default function Dashboard() {
+  const router = useRouter()
+  const { data: session, status } = useSession()
   const [filter, setFilter] = useState('all')
+  const [projects, setProjects] = useState([])
+  const [loading, setLoading] = useState(true)
+  const [error, setError] = useState(null)
+
+  useEffect(() => {
+    if (status === 'unauthenticated') {
+      router.push('/login')
+      return
+    }
+
+    if (status !== 'authenticated') return
+
+    const fetchProjects = async () => {
+      try {
+        const res = await fetch('/api/projects')
+        if (!res.ok) throw new Error('Failed to fetch projects')
+        const data = await res.json()
+        setProjects(data)
+      } catch (err) {
+        setError(err.message)
+      } finally {
+        setLoading(false)
+      }
+    }
+
+    fetchProjects()
+  }, [status, router])
 
   const filtered = filter === 'all' ? projects : projects.filter(p => p.status === filter)
 
-  const inEscrow = 622000
-  const released = 122000
+  // Calculate escrow stats
+  const inEscrow = projects
+    .filter(p => p.status === 'active')
+    .reduce((sum, p) => sum + (p.total_amount_paise / 100), 0)
+  
+  const released = projects
+    .filter(p => p.status === 'completed')
+    .reduce((sum, p) => sum + (p.total_amount_paise / 100), 0)
+
+  if (loading) {
+    return (
+      <div style={{ background: '#f5f5f0', minHeight: '100vh', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+        <p style={{ color: '#888' }}>Loading projects...</p>
+      </div>
+    )
+  }
+
+  if (error) {
+    return (
+      <div style={{ background: '#f5f5f0', minHeight: '100vh', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+        <p style={{ color: '#e74c3c' }}>Error: {error}</p>
+      </div>
+    )
+  }
 
   return (
     <div style={{ background: '#f5f5f0', minHeight: '100vh', fontFamily: 'sans-serif' }}>
@@ -97,7 +119,7 @@ export default function Dashboard() {
         <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: '24px' }}>
           <div>
             <h2 style={{ margin: '0 0 4px', fontSize: '28px', color: '#111' }}>Your Projects</h2>
-            <p style={{ margin: 0, color: '#888', fontSize: '14px' }}>Welcome back, Vatsala. Here's what's in escrow.</p>
+            <p style={{ margin: 0, color: '#888', fontSize: '14px' }}>Welcome back, {session?.user?.name || 'User'}. Here's what's in escrow.</p>
           </div>
           <Link href="/create">
             <button style={{
@@ -144,7 +166,10 @@ export default function Dashboard() {
 
         {/* Project List */}
         <div style={{ background: 'white', border: '1px solid #e5e5e5', borderRadius: '12px', overflow: 'hidden' }}>
-          {filtered.map((p, i) => (
+          {filtered.map((p, i) => {
+            const totalMilestones = p.milestones?.length || 0
+            const completedMilestones = p.milestones?.filter(m => m.status === 'completed')?.length || 0
+            return (
             <div key={p.id} style={{ padding: '20px 24px', borderBottom: i < filtered.length - 1 ? '1px solid #f0f0f0' : 'none' }}>
               <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: '12px' }}>
                 <div style={{ flex: 1, minWidth: 0, marginRight: '16px' }}>
@@ -159,13 +184,13 @@ export default function Dashboard() {
                       {p.status === 'active' ? '● Active' : '✓ Completed'}
                     </span>
                   </div>
-                  <p style={{ margin: 0, color: '#888', fontSize: '13px' }}>Client · {p.client}</p>
+                  <p style={{ margin: 0, color: '#888', fontSize: '13px' }}>Client · {p.client_name}</p>
                 </div>
                 <div style={{ display: 'flex', alignItems: 'center', gap: '16px', flexShrink: 0 }}>
                   <span style={{ fontWeight: 600, color: '#111', fontSize: '16px', whiteSpace: 'nowrap' }}>
-                    ₹{p.amount.toLocaleString('en-IN')}
+                    ₹{(p.total_amount_paise / 100).toLocaleString('en-IN')}
                   </span>
-                  <Link href={`/pay/${p.token}`}>
+                  <Link href={`/pay/${p.invite_token}`}>
                     <button style={{
                       background: 'white', border: '1px solid #e5e5e5', color: '#111',
                       padding: '6px 16px', borderRadius: '8px', cursor: 'pointer',
@@ -180,21 +205,22 @@ export default function Dashboard() {
               {/* Progress Bar */}
               <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
                 <span style={{ fontSize: '12px', color: '#888', whiteSpace: 'nowrap' }}>
-                  {p.milestones.done} of {p.milestones.total} milestones
+                  {completedMilestones} of {totalMilestones} milestones
                 </span>
                 <div style={{ flex: 1, background: '#f0f0f0', borderRadius: '4px', height: '6px' }}>
                   <div style={{
                     background: '#1D9E75', height: '6px', borderRadius: '4px',
-                    width: `${(p.milestones.done / p.milestones.total) * 100}%`,
+                    width: `${totalMilestones > 0 ? (completedMilestones / totalMilestones) * 100 : 0}%`,
                     transition: 'width 0.3s'
                   }} />
                 </div>
                 <span style={{ fontSize: '12px', color: '#888', whiteSpace: 'nowrap' }}>
-                  {Math.round((p.milestones.done / p.milestones.total) * 100)}%
+                  {totalMilestones > 0 ? Math.round((completedMilestones / totalMilestones) * 100) : 0}%
                 </span>
               </div>
             </div>
-          ))}
+            )
+          })}
         </div>
 
         {/* Empty State */}
