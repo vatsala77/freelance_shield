@@ -22,7 +22,8 @@ export default function Dashboard() {
 
     const fetchProjects = async () => {
       try {
-        const res = await fetch('/api/projects')
+        const res = await fetch(`/api/projects?freelancer_id=${session.user.id}`)
+    //    const res = await fetch('/api/projects')
         if (!res.ok) throw new Error('Failed to fetch projects')
         const data = await res.json()
         setProjects(data)
@@ -133,19 +134,37 @@ export default function Dashboard() {
         </div>
 
         {/* Stats Cards */}
-        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: '16px', marginBottom: '32px' }}>
-          {[
-            { label: 'In escrow', val: `₹${inEscrow.toLocaleString('en-IN')}`, sub: '4 active projects', bg: '#e8f5ef', color: '#1D9E75' },
-            { label: 'Released this year', val: `₹${released.toLocaleString('en-IN')}`, sub: 'Paid out to your bank', bg: 'white', color: '#111' },
-            { label: 'Avg. release time', val: '6 hrs', sub: 'From client approval', bg: 'white', color: '#111' },
-          ].map(s => (
-            <div key={s.label} style={{ background: s.bg, border: '1px solid #e5e5e5', borderRadius: '12px', padding: '20px' }}>
-              <p style={{ margin: '0 0 8px', fontSize: '13px', color: '#888' }}>{s.label}</p>
-              <p style={{ margin: '0 0 4px', fontSize: '28px', fontWeight: 700, color: s.color }}>{s.val}</p>
-              <p style={{ margin: 0, fontSize: '12px', color: '#888' }}>{s.sub}</p>
-            </div>
-          ))}
-        </div>
+       <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: '16px', marginBottom: '32px' }}>
+  {[
+    { 
+      label: 'In escrow', 
+      val: `₹${inEscrow.toLocaleString('en-IN')}`, 
+      sub: `${projects.filter(p => p.status === 'active').length} active projects`, 
+      bg: '#e8f5ef', 
+      color: '#1D9E75' 
+    },
+    { 
+      label: 'Released this year', 
+      val: `₹${released.toLocaleString('en-IN')}`, 
+      sub: 'Paid out to your bank', 
+      bg: 'white', 
+      color: '#111' 
+    },
+    { 
+      label: 'Total projects', 
+      val: `${projects.length}`, 
+      sub: `${projects.filter(p => p.status === 'completed').length} completed`, 
+      bg: 'white', 
+      color: '#111' 
+    },
+  ].map(s => (
+    <div key={s.label} style={{ background: s.bg, border: '1px solid #e5e5e5', borderRadius: '12px', padding: '20px' }}>
+      <p style={{ margin: '0 0 8px', fontSize: '13px', color: '#888' }}>{s.label}</p>
+      <p style={{ margin: '0 0 4px', fontSize: '28px', fontWeight: 700, color: s.color }}>{s.val}</p>
+      <p style={{ margin: 0, fontSize: '12px', color: '#888' }}>{s.sub}</p>
+    </div>
+  ))}
+</div>
 
         {/* Filter Tabs */}
         <div style={{ display: 'flex', gap: '8px', marginBottom: '16px', alignItems: 'center' }}>

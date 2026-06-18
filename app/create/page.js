@@ -38,46 +38,45 @@ export default function CreateProject() {
   const total = milestones.reduce((a, m) => a + (Number(m.amount) || 0), 0)
   const fee = Math.round(total * 0.05)
 
-  async function handleSubmit() {
-    alert('BUTTON CLICKED - NEW CODE') 
-    console.log('Submit clicked!', { form, milestones, session })  // YE ADD KARO
-    if (!form.title || !form.client_name || !form.client_email) {
-      alert('Please fill all required fields')
-      return
-    }
-    if (milestones.some(m => !m.title || !m.amount)) {
-      alert('Please fill all milestone titles and amounts')
-      return
-    }
-    if (!session?.user?.id) {
-      alert('Your session expired. Please log in again.')
-      router.push('/login')
-      return
-    }
-
-    setLoading(true)
-    const res = await fetch('/api/projects', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ 
-        ...form, 
-        milestones, 
-        freelancer_id: session.user.id
-      }),
-    })
-    const data = await res.json()
-
-    if (!res.ok) {
-      alert('Error: ' + data.error)
-      setLoading(false)
-      return
-    }
-
-    setLoading(false)
-    const link = `${window.location.origin}/pay/${data.invite_token}`
-    alert(`Project created! Payment link:\n${link}`)
-    router.push('/dashboard')
+ async function handleSubmit() {
+  if (!form.title || !form.client_name || !form.client_email) {
+    alert('Please fill all required fields')
+    return
   }
+  if (milestones.some(m => !m.title || !m.amount)) {
+    alert('Please fill all milestone titles and amounts')
+    return
+  }
+
+  setLoading(true)
+
+  // const freelancer_id = session?.user?.id || 'cdf7954b-c20b-425c-86c1-df883d5a3cff'
+const freelancer_id = session?.user?.id
+if (!freelancer_id) {
+  alert('Session expired, please login again')
+  router.push('/login')
+  return
+}
+
+  const res = await fetch('/api/projects', {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+   body: JSON.stringify({ ...form, milestones, freelancer_id }),
+  })
+
+  const data = await res.json()
+
+  if (!res.ok) {
+    alert('Error: ' + data.error)
+    setLoading(false)
+    return
+  }
+
+  setLoading(false)
+  const link = `${window.location.origin}/pay/${data.invite_token}`
+  alert(`Project created! Payment link:\n${link}`)
+  router.push('/dashboard')
+}
 
   return (
     <div style={{ background: '#f5f5f0', minHeight: '100vh', fontFamily: 'sans-serif' }}>
