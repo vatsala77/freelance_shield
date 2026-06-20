@@ -1,11 +1,11 @@
 import { NextResponse } from 'next/server'
-import { razorpay, toPaise } from '@/lib/razorpay'
+import { razorpay } from '@/lib/razorpay'
 import { supabaseAdmin } from '@/lib/supabase'
 
 export async function POST(req) {
   try {
     const { milestone_id, project_id } = await req.json()
-
+    
     if (!milestone_id || !project_id) {
       return NextResponse.json({ error: 'Missing fields' }, { status: 400 })
     }
@@ -24,19 +24,12 @@ export async function POST(req) {
     const order = await razorpay.orders.create({
       amount: milestone.amount_paise,
       currency: 'INR',
-      receipt: `milestone_${milestone_id}`,
+      receipt: `m_${milestone_id.slice(0, 30)}`,
       notes: {
         milestone_id,
         project_id,
         milestone_title: milestone.title,
       },
-      transfers: [{
-        account: project.freelancer_razorpay_account_id,
-        amount: milestone.amount_paise,
-        currency: 'INR',
-        on_hold: 1,
-        notes: { milestone_id, project_id },
-      }],
     })
 
     await supabaseAdmin
@@ -52,7 +45,6 @@ export async function POST(req) {
       client_name: project.client_name,
       client_email: project.client_email,
     })
-
   } catch (err) {
     console.error(err)
     return NextResponse.json({ error: 'Failed to create order' }, { status: 500 })

@@ -11,7 +11,9 @@ export default function Dashboard() {
   const [projects, setProjects] = useState([])
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState(null)
-
+const [submitFor, setSubmitFor] = useState(null)
+const [submissionLink, setSubmissionLink] = useState('')
+const [submissionNote, setSubmissionNote] = useState('')
   useEffect(() => {
     if (status === 'unauthenticated') {
       router.push('/login')
@@ -38,6 +40,39 @@ export default function Dashboard() {
   }, [status, router])
 
   const filtered = filter === 'all' ? projects : projects.filter(p => p.status === filter)
+  async function handleSubmitWork() {
+  if (!submissionLink.trim()) {
+    alert('Please add a submission link')
+    return
+  }
+
+  const res = await fetch('/api/submit-work', {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ 
+      milestone_id: submitFor, 
+      submission_link: submissionLink,
+      submission_note: submissionNote 
+    }),
+  })
+
+  const data = await res.json()
+  if (!res.ok) {
+    alert('Error: ' + data.error)
+    return
+  }
+
+  setProjects(prev => prev.map(p => ({
+    ...p,
+    milestones: p.milestones?.map(m =>
+      m.id === submitFor ? { ...m, status: 'submitted', submission_link: submissionLink, submission_note: submissionNote } : m
+    )
+  })))
+
+  setSubmitFor(null)
+  setSubmissionLink('')
+  setSubmissionNote('')
+}
 
   // Calculate escrow stats
   const inEscrow = projects
@@ -220,7 +255,40 @@ export default function Dashboard() {
                   </Link>
                 </div>
               </div>
-
+{p.milestones?.some(m => m.status === 'changes_requested') && (
+  <div style={{ background: '#fdeeee', color: '#e74c3c', padding: '8px 12px', borderRadius: '8px', fontSize: '13px', marginBottom: '10px', display: 'flex', alignItems: 'center', gap: '6px' }}>
+    🔄 Client ne changes request ki hai — <Link href={`/pay/${p.invite_token}`} style={{ color: '#e74c3c', fontWeight: 600, textDecoration: 'underline' }}>review karo</Link>
+  </div>
+)}
+{p.milestones?.map(m => (
+  <div key={m.id} style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: '10px 0', borderBottom: '1px solid #f5f5f5' }}>
+    <div>
+      <span style={{ fontSize: '13px', color: '#111', fontWeight: 500 }}>{m.title}</span>
+      <span style={{ fontSize: '12px', color: '#888', marginLeft: '8px' }}>₹{(m.amount_paise / 100).toLocaleString('en-IN')}</span>
+    </div>
+    {m.status === 'funded' && (
+      <button onClick={() => setSubmitFor(m.id)}
+        style={{ background: '#111', color: 'white', border: 'none', padding: '6px 14px', borderRadius: '6px', cursor: 'pointer', fontSize: '12px', fontWeight: 600 }}>
+        Submit Work
+      </button>
+    )}
+    {m.status === 'changes_requested' && (
+      <button onClick={() => setSubmitFor(m.id)}
+        style={{ background: '#e74c3c', color: 'white', border: 'none', padding: '6px 14px', borderRadius: '6px', cursor: 'pointer', fontSize: '12px', fontWeight: 600 }}>
+        Resubmit Work
+      </button>
+    )}
+    {m.status === 'submitted' && (
+      <span style={{ fontSize: '12px', color: '#f59e0b', fontWeight: 500 }}>Awaiting review</span>
+    )}
+    {m.status === 'released' && (
+      <span style={{ fontSize: '12px', color: '#1D9E75', fontWeight: 500 }}>✅ Released</span>
+    )}
+    {m.status === 'pending' && (
+      <span style={{ fontSize: '12px', color: '#888' }}>Awaiting payment</span>
+    )}
+  </div>
+))}
               {/* Progress Bar */}
               <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
                 <span style={{ fontSize: '12px', color: '#888', whiteSpace: 'nowrap' }}>

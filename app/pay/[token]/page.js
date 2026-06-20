@@ -1,7 +1,9 @@
 'use client'
 import { useState, useEffect } from 'react'
 import { useParams } from 'next/navigation'
-
+import { useSession } from 'next-auth/react'
+import html2canvas from 'html2canvas'
+import jsPDF from 'jspdf'
 function loadRazorpayScript() {
   return new Promise((resolve) => {
     if (document.getElementById('razorpay-script')) { resolve(true); return }
@@ -16,6 +18,7 @@ function loadRazorpayScript() {
 
 export default function PayPage() {
   const { token } = useParams()
+  const { data: session } = useSession()
   const [project, setProject] = useState(null)
   const [milestones, setMilestones] = useState([])
   const [loading, setLoading] = useState(true)
@@ -24,34 +27,58 @@ export default function PayPage() {
   const [toast, setToast] = useState('')
   const [activity, setActivity] = useState([])
   const [showReceipt, setShowReceipt] = useState(false)
+  const [requestChangeFor, setRequestChangeFor] = useState(null)
+  const [changeNote, setChangeNote] = useState('')
+  const [submitFor, setSubmitFor] = useState(null)
+  const [submissionLink, setSubmissionLink] = useState('')
+  const [submissionNote, setSubmissionNote] = useState('')
+
+  const isFreelancer = session?.user?.id === project?.freelancer_id
 
   useEffect(() => {
-    if (!token) return
-    fetch(`/api/pay/${token}`)
-      .then(r => r.json())
-      .then(data => {
-        if (data.error) { setError(data.error); setLoading(false); return }
-        setProject(data.project)
-        setMilestones(data.milestones)
+  if (!token) return
+  fetch(`/api/pay/${token}`)
+    .then(r => r.json())
+    .then(async data => {
+      if (data.error) { setError(data.error); setLoading(false); return }
+      setProject(data.project)
+      setMilestones(data.milestones)
+
+      const actRes = await fetch(`/api/activity?project_id=${data.project.id}`)
+      const actData = await actRes.json()
+
+      if (actData.length > 0) {
+        setActivity(actData.map(a => ({
+          id: a.id,
+          text: a.text,
+          color: a.color,
+          time: new Date(a.created_at).toLocaleString('en-IN', { hour: 'numeric', minute: 'numeric', hour12: true })
+        })))
+      } else {
         setActivity([
-          { id: 1, text: `Payment link shared with ${data.project.client_name}`, time: 'Earlier', color: '#888' },
-          { id: 2, text: `Project created by freelancer`, time: 'Earlier', color: '#888' },
+          { id: 1, text: `Project created by freelancer`, time: 'Earlier', color: '#888' },
         ])
-        setLoading(false)
-      })
-      .catch(() => { setError('Failed to load project'); setLoading(false) })
-  }, [token])
+      }
+      setLoading(false)
+    })
+    .catch(() => { setError('Failed to load project'); setLoading(false) })
+}, [token])
 
   function showToast(msg) {
     setToast(msg)
     setTimeout(() => setToast(''), 3000)
   }
 
-  function addActivity(text, color = '#1D9E75') {
-    setActivity(prev => [{ id: Date.now(), text, time: 'Just now', color }, ...prev])
-  }
+  async function addActivity(text, color = '#1D9E75') {
+  await fetch('/api/activity', {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ project_id: project.id, text, color }),
+  })
+  setActivity(prev => [{ id: Date.now(), text, time: 'Just now', color }, ...prev])
+}
 
-  const inEscrow = milestones.filter(m => ['funded', 'submitted', 'approved'].includes(m.status)).reduce((a, m) => a + (m.amount_paise / 100), 0)
+  const inEscrow = milestones.filter(m => ['funded', 'submitted', 'changes_requested'].includes(m.status)).reduce((a, m) => a + (m.amount_paise / 100), 0)
   const released = milestones.filter(m => m.status === 'released').reduce((a, m) => a + (m.amount_paise / 100), 0)
   const releasedCount = milestones.filter(m => m.status === 'released').length
 
@@ -78,13 +105,19 @@ export default function PayPage() {
         order_id: order.order_id,
         prefill: { name: project.client_name, email: project.client_email },
         theme: { color: '#1D9E75' },
-        handler: function () {
-          setMilestones(prev => prev.map(m =>
-            m.id === milestone.id ? { ...m, status: 'funded' } : m
-          ))
-          addActivity(`${project.client_name} paid ₹${(milestone.amount_paise / 100).toLocaleString('en-IN')} into escrow for "${milestone.title}"`)
-          showToast(`✅ ₹${(milestone.amount_paise / 100).toLocaleString('en-IN')} locked in escrow!`)
-        },
+       handler: async function () {
+  await fetch('/api/confirm-payment', {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ milestone_id: milestone.id }),
+  })
+
+  setMilestones(prev => prev.map(m =>
+    m.id === milestone.id ? { ...m, status: 'funded' } : m
+  ))
+  addActivity(`${project.client_name} paid ₹${(milestone.amount_paise / 100).toLocaleString('en-IN')} into escrow for "${milestone.title}"`)
+  showToast(`✅ ₹${(milestone.amount_paise / 100).toLocaleString('en-IN')} locked in escrow!`)
+},
         modal: { ondismiss: () => setPaying(false) }
       })
       rzp.open()
@@ -95,12 +128,95 @@ export default function PayPage() {
     }
   }
 
-  function handleApprove(milestone) {
+  async function handleApprove(milestone) {
+  const res = await fetch('/api/approve-milestone', {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ milestone_id: milestone.id }),
+  })
+
+  async function downloadReceipt() {
+  const element = document.getElementById('receipt-content')
+  const canvas = await html2canvas(element, { scale: 2 })
+  const imgData = canvas.toDataURL('image/png')
+  
+  const pdf = new jsPDF('p', 'mm', 'a4')
+  const imgWidth = 190
+  const imgHeight = (canvas.height * imgWidth) / canvas.width
+  pdf.addImage(imgData, 'PNG', 10, 10, imgWidth, imgHeight)
+  pdf.save(`FreelanceShield-Receipt-${project.title.replace(/\s+/g, '-')}.pdf`)
+}
+
+  const data = await res.json()
+  if (!res.ok) {
+    showToast('Error: ' + data.error)
+    return
+  }
+
+  setMilestones(prev => prev.map(m =>
+    m.id === milestone.id ? { ...m, status: 'released' } : m
+  ))
+  addActivity(`You approved "${milestone.title}" — ₹${(milestone.amount_paise / 100).toLocaleString('en-IN')} released to freelancer`)
+  showToast(`🎉 ₹${(milestone.amount_paise / 100).toLocaleString('en-IN')} released to freelancer!`)
+}
+
+  async function handleRequestChanges() {
+    if (!changeNote.trim()) {
+      showToast('Please write what needs to change')
+      return
+    }
+
+    const res = await fetch('/api/request-changes', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ milestone_id: requestChangeFor, note: changeNote }),
+    })
+
+    const data = await res.json()
+    if (!res.ok) {
+      showToast('Error: ' + data.error)
+      return
+    }
+
     setMilestones(prev => prev.map(m =>
-      m.id === milestone.id ? { ...m, status: 'released' } : m
+      m.id === requestChangeFor ? { ...m, status: 'changes_requested', change_request_note: changeNote } : m
     ))
-    addActivity(`You approved "${milestone.title}" — ₹${(milestone.amount_paise / 100).toLocaleString('en-IN')} released to freelancer`)
-    showToast(`🎉 ₹${(milestone.amount_paise / 100).toLocaleString('en-IN')} released to freelancer!`)
+    addActivity(`Client requested changes: "${changeNote}"`, '#e74c3c')
+    showToast('Changes requested — freelancer notified')
+    setRequestChangeFor(null)
+    setChangeNote('')
+  }
+
+  async function handleSubmitWork() {
+    if (!submissionLink.trim()) {
+      showToast('Please add a submission link')
+      return
+    }
+
+    const res = await fetch('/api/submit-work', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ 
+        milestone_id: submitFor, 
+        submission_link: submissionLink,
+        submission_note: submissionNote 
+      }),
+    })
+
+    const data = await res.json()
+    if (!res.ok) {
+      showToast('Error: ' + data.error)
+      return
+    }
+
+    setMilestones(prev => prev.map(m =>
+      m.id === submitFor ? { ...m, status: 'submitted', submission_link: submissionLink, submission_note: submissionNote, change_request_note: null } : m
+    ))
+    addActivity(`Freelancer submitted work — awaiting client review`, '#f59e0b')
+    showToast('✅ Work submitted — client notified')
+    setSubmitFor(null)
+    setSubmissionLink('')
+    setSubmissionNote('')
   }
 
   function getStatusBadge(status) {
@@ -108,6 +224,7 @@ export default function PayPage() {
       pending: { label: 'Awaiting payment', color: '#888', bg: '#f0f0f0' },
       funded: { label: 'In escrow', color: '#1D9E75', bg: '#e8f5ef' },
       submitted: { label: 'Work submitted', color: '#f59e0b', bg: '#fff8e1' },
+      changes_requested: { label: 'Changes requested', color: '#e74c3c', bg: '#fdeeee' },
       released: { label: 'Released', color: '#1D9E75', bg: '#e8f5ef' },
     }
     const s = map[status] || map.pending
@@ -119,7 +236,7 @@ export default function PayPage() {
   }
 
   function getProgressWidth(status) {
-    const map = { pending: '5%', funded: '33%', submitted: '66%', released: '100%' }
+    const map = { pending: '5%', funded: '33%', submitted: '66%', changes_requested: '50%', released: '100%' }
     return map[status] || '0%'
   }
 
@@ -185,7 +302,7 @@ export default function PayPage() {
           <h3 style={{ margin: '0 0 12px', fontSize: '13px', fontWeight: 600, color: '#888', textTransform: 'uppercase' }}>MILESTONES</h3>
 
           {milestones.map((m, index) => (
-            <div key={m.id} style={{ background: 'white', border: `1px solid ${m.status === 'submitted' ? '#f59e0b' : m.status === 'released' ? '#1D9E75' : '#e5e5e5'}`, borderRadius: '12px', padding: '20px', marginBottom: '12px' }}>
+            <div key={m.id} style={{ background: 'white', border: `1px solid ${m.status === 'submitted' ? '#f59e0b' : m.status === 'changes_requested' ? '#e74c3c' : m.status === 'released' ? '#1D9E75' : '#e5e5e5'}`, borderRadius: '12px', padding: '20px', marginBottom: '12px' }}>
               <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: '12px' }}>
                 <div>
                   <div style={{ display: 'flex', alignItems: 'center', gap: '10px', marginBottom: '6px' }}>
@@ -197,21 +314,67 @@ export default function PayPage() {
                     {m.due_date && `📅 Due ${new Date(m.due_date).toLocaleDateString('en-IN', { day: 'numeric', month: 'short', year: 'numeric' })} · `}
                     <strong style={{ color: '#111' }}>₹{(m.amount_paise / 100).toLocaleString('en-IN')}</strong>
                   </p>
+                  {m.status === 'changes_requested' && m.change_request_note && (
+                    <p style={{ margin: '8px 0 0', color: '#e74c3c', fontSize: '13px', background: '#fdeeee', padding: '8px 12px', borderRadius: '6px' }}>
+                      💬 {m.change_request_note}
+                    </p>
+                  )}
+                  {m.status === 'submitted' && m.submission_link && (
+                    <p style={{ margin: '8px 0 0', fontSize: '13px' }}>
+                      🔗 <a href={m.submission_link} target="_blank" rel="noopener noreferrer" style={{ color: '#1D9E75' }}>{m.submission_link}</a>
+                    </p>
+                  )}
                 </div>
 
-                {m.status === 'pending' && (index === 0 || milestones[index - 1].status === 'released') && (
-                  <button onClick={() => handlePay(m)} disabled={paying}
-                    style={{ background: '#111', color: 'white', border: 'none', padding: '10px 20px', borderRadius: '8px', cursor: 'pointer', fontWeight: 600, fontSize: '14px' }}>
-                    Pay ₹{(m.amount_paise / 100).toLocaleString('en-IN')}
-                  </button>
+               {m.status === 'pending' && (index === 0 || milestones[index - 1].status === 'released') && (
+  isFreelancer ? (
+    <span style={{ color: '#888', fontSize: '13px' }}>⏳ Awaiting client payment</span>
+  ) : (
+    <button onClick={() => handlePay(m)} disabled={paying}
+      style={{ background: '#111', color: 'white', border: 'none', padding: '10px 20px', borderRadius: '8px', cursor: 'pointer', fontWeight: 600, fontSize: '14px' }}>
+      Pay ₹{(m.amount_paise / 100).toLocaleString('en-IN')}
+    </button>
+  )
+)}
+
+                {m.status === 'funded' && (
+                  isFreelancer ? (
+                    <button onClick={() => setSubmitFor(m.id)}
+                      style={{ background: '#111', color: 'white', border: 'none', padding: '10px 20px', borderRadius: '8px', cursor: 'pointer', fontWeight: 600, fontSize: '14px' }}>
+                      Submit Work
+                    </button>
+                  ) : (
+                    <span style={{ color: '#1D9E75', fontSize: '13px', fontWeight: 500 }}>⏳ Awaiting submission</span>
+                  )
                 )}
-                {m.status === 'funded' && <span style={{ color: '#1D9E75', fontSize: '13px', fontWeight: 500 }}>⏳ Awaiting submission</span>}
-                {m.status === 'submitted' && (
-                  <button onClick={() => handleApprove(m)}
-                    style={{ background: '#1D9E75', color: 'white', border: 'none', padding: '10px 20px', borderRadius: '8px', cursor: 'pointer', fontWeight: 600, fontSize: '14px' }}>
-                    ✅ Approve & Release
-                  </button>
+
+                {m.status === 'submitted' && !isFreelancer && (
+                  <div style={{ display: 'flex', gap: '8px' }}>
+                    <button onClick={() => setRequestChangeFor(m.id)}
+                      style={{ background: 'white', border: '1px solid #e5e5e5', color: '#111', padding: '10px 16px', borderRadius: '8px', cursor: 'pointer', fontWeight: 600, fontSize: '14px' }}>
+                      Request Changes
+                    </button>
+                    <button onClick={() => handleApprove(m)}
+                      style={{ background: '#1D9E75', color: 'white', border: 'none', padding: '10px 20px', borderRadius: '8px', cursor: 'pointer', fontWeight: 600, fontSize: '14px' }}>
+                      ✅ Approve & Release
+                    </button>
+                  </div>
                 )}
+                {m.status === 'submitted' && isFreelancer && (
+                  <span style={{ color: '#f59e0b', fontSize: '13px', fontWeight: 500 }}>📤 Awaiting client review</span>
+                )}
+
+                {m.status === 'changes_requested' && (
+                  isFreelancer ? (
+                    <button onClick={() => setSubmitFor(m.id)}
+                      style={{ background: '#e74c3c', color: 'white', border: 'none', padding: '10px 20px', borderRadius: '8px', cursor: 'pointer', fontWeight: 600, fontSize: '14px' }}>
+                      Resubmit Work
+                    </button>
+                  ) : (
+                    <span style={{ color: '#e74c3c', fontSize: '13px', fontWeight: 500 }}>🔄 Waiting on freelancer</span>
+                  )
+                )}
+
                 {m.status === 'released' && <span style={{ color: '#1D9E75', fontSize: '13px', fontWeight: 500 }}>✅ Released</span>}
               </div>
 
@@ -245,6 +408,219 @@ export default function PayPage() {
           </div>
         </div>
       </div>
+
+      {requestChangeFor && (
+        <div style={{ position: 'fixed', inset: 0, background: 'rgba(0,0,0,0.5)', zIndex: 1000, display: 'flex', alignItems: 'center', justifyContent: 'center' }}
+          onClick={() => setRequestChangeFor(null)}>
+          <div style={{ background: 'white', borderRadius: '16px', width: '420px', padding: '28px', boxShadow: '0 20px 60px rgba(0,0,0,0.2)' }}
+            onClick={e => e.stopPropagation()}>
+            
+            <div style={{ display: 'flex', alignItems: 'center', gap: '10px', marginBottom: '8px' }}>
+              <span style={{ background: '#fdeeee', color: '#e74c3c', width: '32px', height: '32px', borderRadius: '50%', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '16px' }}>🔄</span>
+              <h3 style={{ margin: 0, color: '#111', fontSize: '18px' }}>Request changes</h3>
+            </div>
+            <p style={{ margin: '0 0 16px', color: '#888', fontSize: '13px' }}>Batao kya badalna hai — freelancer ko ye note milega.</p>
+            
+            <textarea 
+              value={changeNote} 
+              onChange={e => setChangeNote(e.target.value)}
+              placeholder="e.g. Logo color match nahi kar raha brand guide se..."
+              rows={4}
+              style={{ 
+                width: '100%', 
+                padding: '12px 14px', 
+                border: '1px solid #ddd', 
+                borderRadius: '10px', 
+                fontSize: '14px', 
+                marginBottom: '20px', 
+                boxSizing: 'border-box', 
+                resize: 'vertical',
+                background: '#f9f9f9',
+                color: '#111',
+                outline: 'none',
+                fontFamily: 'sans-serif'
+              }} 
+            />
+            
+            <div style={{ display: 'flex', gap: '10px' }}>
+              <button onClick={() => setRequestChangeFor(null)}
+                style={{ flex: 1, padding: '12px', background: '#fdeeee', border: 'none', borderRadius: '10px', cursor: 'pointer', fontWeight: 600, color: '#e74c3c', fontSize: '14px' }}>
+                Cancel
+              </button>
+              <button onClick={handleRequestChanges}
+                style={{ flex: 1, padding: '12px', background: '#111', color: 'white', border: 'none', borderRadius: '10px', cursor: 'pointer', fontWeight: 600, fontSize: '14px' }}>
+                Send request
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {submitFor && (
+        <div style={{ position: 'fixed', inset: 0, background: 'rgba(0,0,0,0.5)', zIndex: 1000, display: 'flex', alignItems: 'center', justifyContent: 'center' }}
+          onClick={() => setSubmitFor(null)}>
+          <div style={{ background: 'white', borderRadius: '16px', width: '420px', padding: '28px', boxShadow: '0 20px 60px rgba(0,0,0,0.2)' }}
+            onClick={e => e.stopPropagation()}>
+            
+            <div style={{ display: 'flex', alignItems: 'center', gap: '10px', marginBottom: '8px' }}>
+              <span style={{ background: '#e8f5ef', color: '#1D9E75', width: '32px', height: '32px', borderRadius: '50%', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '16px' }}>📤</span>
+              <h3 style={{ margin: 0, color: '#111', fontSize: '18px' }}>Submit work</h3>
+            </div>
+            <p style={{ margin: '0 0 16px', color: '#888', fontSize: '13px' }}>Apna kaam ka link share karo (Drive, GitHub, Figma, etc).</p>
+            
+            <label style={{ fontSize: '13px', color: '#555', fontWeight: 500 }}>Submission link *</label>
+            <input
+              value={submissionLink}
+              onChange={e => setSubmissionLink(e.target.value)}
+              placeholder="https://drive.google.com/..."
+              style={{ 
+                width: '100%', 
+                padding: '12px 14px', 
+                border: '1px solid #ddd', 
+                borderRadius: '10px', 
+                fontSize: '14px', 
+                marginTop: '4px',
+                marginBottom: '16px', 
+                boxSizing: 'border-box',
+                background: '#f9f9f9',
+                color: '#111',
+                outline: 'none'
+              }} 
+            />
+
+            <label style={{ fontSize: '13px', color: '#555', fontWeight: 500 }}>Note (optional)</label>
+            <textarea 
+              value={submissionNote} 
+              onChange={e => setSubmissionNote(e.target.value)}
+              placeholder="Kuch bhi bolna ho client ko..."
+              rows={3}
+              style={{ 
+                width: '100%', 
+                padding: '12px 14px', 
+                border: '1px solid #ddd', 
+                borderRadius: '10px', 
+                fontSize: '14px', 
+                marginTop: '4px',
+                marginBottom: '20px', 
+                boxSizing: 'border-box', 
+                resize: 'vertical',
+                background: '#f9f9f9',
+                color: '#111',
+                outline: 'none',
+                fontFamily: 'sans-serif'
+              }} 
+            />
+            
+            <div style={{ display: 'flex', gap: '10px' }}>
+              <button onClick={() => setSubmitFor(null)}
+                style={{ flex: 1, padding: '12px', background: '#f0f0f0', border: 'none', borderRadius: '10px', cursor: 'pointer', fontWeight: 600, color: '#111', fontSize: '14px' }}>
+                Cancel
+              </button>
+              <button onClick={handleSubmitWork}
+                style={{ flex: 1, padding: '12px', background: '#1D9E75', color: 'white', border: 'none', borderRadius: '10px', cursor: 'pointer', fontWeight: 600, fontSize: '14px' }}>
+                Submit
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {showReceipt && (
+  <div style={{ position: 'fixed', inset: 0, background: 'rgba(0,0,0,0.5)', zIndex: 1000, display: 'flex', alignItems: 'center', justifyContent: 'center' }}
+    onClick={() => setShowReceipt(false)}>
+   <div id="receipt-content" style={{ background: 'white', borderRadius: '16px', width: '500px', maxHeight: '85vh', overflowY: 'auto' }}
+  onClick={e => e.stopPropagation()}>
+
+      <div style={{ background: '#1D9E75', padding: '24px', borderRadius: '16px 16px 0 0', display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start' }}>
+        <div>
+          <h2 style={{ margin: '0 0 4px', color: 'white', fontSize: '20px' }}>FreelanceShield</h2>
+          <p style={{ margin: 0, color: 'rgba(255,255,255,0.8)', fontSize: '13px' }}>Escrow Payment Receipt</p>
+        </div>
+        <div style={{ textAlign: 'right' }}>
+          <p style={{ margin: '0 0 4px', color: 'white', fontSize: '13px', fontWeight: 600 }}>Receipt #{project.id.slice(0, 8).toUpperCase()}</p>
+          <p style={{ margin: 0, color: 'rgba(255,255,255,0.8)', fontSize: '12px' }}>
+            {new Date().toLocaleDateString('en-IN', { day: 'numeric', month: 'short', year: 'numeric' })}
+          </p>
+        </div>
+      </div>
+
+      <div style={{ padding: '24px' }}>
+        <p style={{ margin: '0 0 4px', fontSize: '12px', color: '#888', fontWeight: 600, textTransform: 'uppercase' }}>PROJECT</p>
+        <h3 style={{ margin: '0 0 16px', color: '#111' }}>{project.title}</h3>
+
+        <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '16px', marginBottom: '20px' }}>
+          <div>
+            <p style={{ margin: '0 0 4px', fontSize: '12px', color: '#888' }}>Client</p>
+            <p style={{ margin: 0, fontWeight: 500, color: '#111' }}>{project.client_name}</p>
+            <p style={{ margin: 0, fontSize: '12px', color: '#888' }}>{project.client_email}</p>
+          </div>
+          <div>
+            <p style={{ margin: '0 0 4px', fontSize: '12px', color: '#888' }}>Status</p>
+            <p style={{ margin: 0, fontWeight: 500, color: '#111', textTransform: 'capitalize' }}>{project.status}</p>
+          </div>
+        </div>
+
+        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: '12px', marginBottom: '20px' }}>
+          {[
+            { label: 'TOTAL PROJECT', val: `Rs. ${(project.total_amount_paise / 100).toLocaleString('en-IN')}`, color: '#111' },
+            { label: 'IN ESCROW', val: `Rs. ${inEscrow.toLocaleString('en-IN')}`, color: '#1D9E75' },
+            { label: 'RELEASED', val: `Rs. ${released.toLocaleString('en-IN')}`, color: '#111' },
+          ].map(s => (
+            <div key={s.label} style={{ background: '#f9f9f9', borderRadius: '8px', padding: '12px', textAlign: 'center' }}>
+              <p style={{ margin: '0 0 4px', fontSize: '10px', color: '#888', fontWeight: 600 }}>{s.label}</p>
+              <p style={{ margin: 0, fontWeight: 700, color: s.color, fontSize: '15px' }}>{s.val}</p>
+            </div>
+          ))}
+        </div>
+
+        <p style={{ margin: '0 0 8px', fontWeight: 600, color: '#111' }}>Milestones</p>
+        <table style={{ width: '100%', borderCollapse: 'collapse', marginBottom: '20px' }}>
+          <thead>
+            <tr style={{ borderBottom: '1px solid #e5e5e5' }}>
+              {['#', 'Milestone', 'Status', 'Amount'].map(h => (
+                <th key={h} style={{ padding: '8px', textAlign: 'left', fontSize: '11px', color: '#888', fontWeight: 600 }}>{h}</th>
+              ))}
+            </tr>
+          </thead>
+          <tbody>
+            {milestones.map(m => (
+              <tr key={m.id} style={{ borderBottom: '1px solid #f0f0f0' }}>
+                <td style={{ padding: '10px 8px', fontSize: '13px', color: '#888' }}>{m.position}</td>
+                <td style={{ padding: '10px 8px', fontSize: '13px', color: '#111' }}>{m.title}</td>
+                <td style={{ padding: '10px 8px', fontSize: '12px', color: m.status === 'released' ? '#1D9E75' : '#888' }}>
+                  {m.status === 'released' ? 'Released' : m.status === 'submitted' ? 'Work submitted' : m.status === 'funded' ? 'In escrow' : m.status === 'changes_requested' ? 'Changes requested' : 'Awaiting payment'}
+                </td>
+                <td style={{ padding: '10px 8px', fontSize: '13px', fontWeight: 600, color: '#111' }}>Rs. {(m.amount_paise / 100).toLocaleString('en-IN')}</td>
+              </tr>
+            ))}
+          </tbody>
+        </table>
+
+        <p style={{ margin: '0 0 8px', fontWeight: 600, color: '#111' }}>Activity timeline</p>
+        {activity.slice(0, 6).map(a => (
+          <div key={a.id} style={{ display: 'flex', gap: '10px', marginBottom: '8px', alignItems: 'flex-start' }}>
+            <div style={{ width: '8px', height: '8px', borderRadius: '50%', background: a.color, marginTop: '5px', flexShrink: 0 }} />
+            <div>
+              <p style={{ margin: '0 0 2px', fontSize: '12px', color: '#111' }}>{a.text}</p>
+              <p style={{ margin: 0, fontSize: '11px', color: '#888' }}>{a.time}</p>
+            </div>
+          </div>
+        ))}
+<button
+  onClick={downloadReceipt}
+  style={{ width: '100%', padding: '12px', background: '#111', color: 'white', border: 'none', borderRadius: '8px', cursor: 'pointer', fontWeight: 600, marginTop: '16px', marginBottom: '8px' }}>
+  ⬇ Download as PDF
+</button>
+        <button
+          onClick={() => setShowReceipt(false)}
+          style={{ width: '100%', padding: '12px', background: '#1D9E75', color: 'white', border: 'none', borderRadius: '8px', cursor: 'pointer', fontWeight: 600, marginTop: '16px' }}>
+          Close Receipt
+        </button>
+      </div>
+    </div>
+  </div>
+)}
+
     </div>
   )
 }
