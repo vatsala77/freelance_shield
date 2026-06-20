@@ -135,17 +135,7 @@ export default function PayPage() {
     body: JSON.stringify({ milestone_id: milestone.id }),
   })
 
-  async function downloadReceipt() {
-  const element = document.getElementById('receipt-content')
-  const canvas = await html2canvas(element, { scale: 2 })
-  const imgData = canvas.toDataURL('image/png')
   
-  const pdf = new jsPDF('p', 'mm', 'a4')
-  const imgWidth = 190
-  const imgHeight = (canvas.height * imgWidth) / canvas.width
-  pdf.addImage(imgData, 'PNG', 10, 10, imgWidth, imgHeight)
-  pdf.save(`FreelanceShield-Receipt-${project.title.replace(/\s+/g, '-')}.pdf`)
-}
 
   const data = await res.json()
   if (!res.ok) {
@@ -158,6 +148,38 @@ export default function PayPage() {
   ))
   addActivity(`You approved "${milestone.title}" — ₹${(milestone.amount_paise / 100).toLocaleString('en-IN')} released to freelancer`)
   showToast(`🎉 ₹${(milestone.amount_paise / 100).toLocaleString('en-IN')} released to freelancer!`)
+}
+async function downloadReceipt() {
+  const element = document.getElementById('receipt-content')
+
+  const canvas = await html2canvas(element, {
+    scale: 3,
+    useCORS: true,
+    backgroundColor: '#ffffff',
+    logging: false
+  })
+
+  const imgData = canvas.toDataURL('image/png', 1.0)
+  const pdf = new jsPDF('p', 'mm', 'a4')
+  const pageWidth = 210
+  const pageHeight = 297
+  const imgWidth = pageWidth - 20
+  const imgHeight = (canvas.height * imgWidth) / canvas.width
+
+  let heightLeft = imgHeight
+  let position = 10
+
+  pdf.addImage(imgData, 'PNG', 10, position, imgWidth, imgHeight, undefined, 'FAST')
+  heightLeft -= (pageHeight - 20)
+
+  while (heightLeft > 0) {
+    position = heightLeft - imgHeight + 10
+    pdf.addPage()
+    pdf.addImage(imgData, 'PNG', 10, position, imgWidth, imgHeight, undefined, 'FAST')
+    heightLeft -= pageHeight
+  }
+
+  pdf.save(`FreelanceShield-Receipt-${project.title.replace(/\s+/g, '-')}.pdf`)
 }
 
   async function handleRequestChanges() {
@@ -525,11 +547,11 @@ export default function PayPage() {
         </div>
       )}
 
-      {showReceipt && (
+ {showReceipt && (
   <div style={{ position: 'fixed', inset: 0, background: 'rgba(0,0,0,0.5)', zIndex: 1000, display: 'flex', alignItems: 'center', justifyContent: 'center' }}
     onClick={() => setShowReceipt(false)}>
-   <div id="receipt-content" style={{ background: 'white', borderRadius: '16px', width: '500px', maxHeight: '85vh', overflowY: 'auto' }}
-  onClick={e => e.stopPropagation()}>
+    <div id="receipt-content" style={{ background: 'white', borderRadius: '16px', width: '500px', maxHeight: '85vh', overflowY: 'auto' }}
+      onClick={e => e.stopPropagation()}>
 
       <div style={{ background: '#1D9E75', padding: '24px', borderRadius: '16px 16px 0 0', display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start' }}>
         <div>
@@ -550,13 +572,12 @@ export default function PayPage() {
 
         <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '16px', marginBottom: '20px' }}>
           <div>
-            <p style={{ margin: '0 0 4px', fontSize: '12px', color: '#888' }}>Client</p>
-            <p style={{ margin: 0, fontWeight: 500, color: '#111' }}>{project.client_name}</p>
-            <p style={{ margin: 0, fontSize: '12px', color: '#888' }}>{project.client_email}</p>
+            <p style={{ margin: '0 0 4px', fontSize: '12px', color: '#888' }}>Freelancer</p>
+            <p style={{ margin: 0, fontWeight: 500, color: '#111' }}>{session?.user?.name || 'Freelancer'}</p>
           </div>
           <div>
-            <p style={{ margin: '0 0 4px', fontSize: '12px', color: '#888' }}>Status</p>
-            <p style={{ margin: 0, fontWeight: 500, color: '#111', textTransform: 'capitalize' }}>{project.status}</p>
+            <p style={{ margin: '0 0 4px', fontSize: '12px', color: '#888' }}>Client</p>
+            <p style={{ margin: 0, fontWeight: 500, color: '#111' }}>{project.client_name}</p>
           </div>
         </div>
 
@@ -606,20 +627,30 @@ export default function PayPage() {
             </div>
           </div>
         ))}
-<button
-  onClick={downloadReceipt}
-  style={{ width: '100%', padding: '12px', background: '#111', color: 'white', border: 'none', borderRadius: '8px', cursor: 'pointer', fontWeight: 600, marginTop: '16px', marginBottom: '8px' }}>
-  ⬇ Download as PDF
-</button>
+
+        <div style={{ borderTop: '1px solid #e5e5e5', marginTop: '20px', paddingTop: '12px' }}>
+          <p style={{ margin: 0, fontSize: '11px', color: '#aaa' }}>
+            Powered by Razorpay Route. Funds held in an RBI-regulated escrow account.
+          </p>
+          <p style={{ margin: '4px 0 0', fontSize: '11px', color: '#1D9E75' }}>
+            freelanceshield.in &nbsp;·&nbsp; support@freelanceshield.in
+          </p>
+        </div>
+
+        <button
+          onClick={downloadReceipt}
+          style={{ width: '100%', padding: '12px', background: '#111', color: 'white', border: 'none', borderRadius: '8px', cursor: 'pointer', fontWeight: 600, marginTop: '16px', marginBottom: '8px' }}>
+          ⬇ Download as PDF
+        </button>
         <button
           onClick={() => setShowReceipt(false)}
-          style={{ width: '100%', padding: '12px', background: '#1D9E75', color: 'white', border: 'none', borderRadius: '8px', cursor: 'pointer', fontWeight: 600, marginTop: '16px' }}>
+          style={{ width: '100%', padding: '12px', background: '#1D9E75', color: 'white', border: 'none', borderRadius: '8px', cursor: 'pointer', fontWeight: 600 }}>
           Close Receipt
         </button>
       </div>
     </div>
   </div>
-)}
+)},
 
     </div>
   )
