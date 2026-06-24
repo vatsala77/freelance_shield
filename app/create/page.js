@@ -1,5 +1,5 @@
 'use client'
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 import Link from 'next/link'
 import { useRouter } from 'next/navigation'
 import { useSession } from 'next-auth/react'
@@ -8,6 +8,8 @@ export default function CreateProject() {
   const router = useRouter()
   const { data: session } = useSession()
   const [loading, setLoading] = useState(false)
+  const [hasBankDetails, setHasBankDetails] = useState(true)
+  const [checkingBank, setCheckingBank] = useState(true)
   const [form, setForm] = useState({
     title: '',
     client_name: '',
@@ -17,6 +19,17 @@ export default function CreateProject() {
   const [milestones, setMilestones] = useState([
     { id: 1, title: '', description: '', amount: '', due: '' }
   ])
+
+  useEffect(() => {
+    if (!session?.user?.id) return
+    fetch(`/api/bank-details?user_id=${session.user.id}`)
+      .then(r => r.json())
+      .then(data => {
+        setHasBankDetails(!!data.bank_details_added)
+        setCheckingBank(false)
+      })
+      .catch(() => setCheckingBank(false))
+  }, [session])
 
   function handleForm(e) {
     setForm({ ...form, [e.target.name]: e.target.value })
@@ -38,45 +51,70 @@ export default function CreateProject() {
   const total = milestones.reduce((a, m) => a + (Number(m.amount) || 0), 0)
   const fee = Math.round(total * 0.05)
 
- async function handleSubmit() {
-  if (!form.title || !form.client_name || !form.client_email) {
-    alert('Please fill all required fields')
-    return
-  }
-  if (milestones.some(m => !m.title || !m.amount)) {
-    alert('Please fill all milestone titles and amounts')
-    return
-  }
+  async function handleSubmit() {
+    if (!form.title || !form.client_name || !form.client_email) {
+      alert('Please fill all required fields')
+      return
+    }
+    if (milestones.some(m => !m.title || !m.amount)) {
+      alert('Please fill all milestone titles and amounts')
+      return
+    }
 
-  setLoading(true)
+    setLoading(true)
 
-  // const freelancer_id = session?.user?.id || 'cdf7954b-c20b-425c-86c1-df883d5a3cff'
-const freelancer_id = session?.user?.id
-if (!freelancer_id) {
-  alert('Session expired, please login again')
-  router.push('/login')
-  return
-}
+    const freelancer_id = session?.user?.id
+    if (!freelancer_id) {
+      alert('Session expired, please login again')
+      router.push('/login')
+      return
+    }
 
-  const res = await fetch('/api/projects', {
-    method: 'POST',
-    headers: { 'Content-Type': 'application/json' },
-   body: JSON.stringify({ ...form, milestones, freelancer_id }),
-  })
+    const res = await fetch('/api/projects', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ ...form, milestones, freelancer_id }),
+    })
 
-  const data = await res.json()
+    const data = await res.json()
 
-  if (!res.ok) {
-    alert('Error: ' + data.error)
+    if (!res.ok) {
+      alert('Error: ' + data.error)
+      setLoading(false)
+      return
+    }
+
     setLoading(false)
-    return
+    const link = `${window.location.origin}/pay/${data.invite_token}`
+    alert(`Project created! Payment link:\n${link}`)
+    router.push('/dashboard')
   }
 
-  setLoading(false)
-  const link = `${window.location.origin}/pay/${data.invite_token}`
-  alert(`Project created! Payment link:\n${link}`)
-  router.push('/dashboard')
-}
+  if (checkingBank) {
+    return (
+      <div style={{ background: '#f5f5f0', minHeight: '100vh', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+        <p style={{ color: '#888' }}>Loading...</p>
+      </div>
+    )
+  }
+
+  if (!hasBankDetails) {
+    return (
+      <div style={{ background: '#f5f5f0', minHeight: '100vh', display: 'flex', alignItems: 'center', justifyContent: 'center', flexDirection: 'column', padding: '20px' }}>
+        <div style={{ background: 'white', border: '1px solid #e5e5e5', borderRadius: '12px', padding: '32px', maxWidth: '400px', textAlign: 'center' }}>
+          <p style={{ fontSize: '32px', margin: '0 0 12px' }}>🏦</p>
+          <h3 style={{ margin: '0 0 8px', color: '#111' }}>Add your bank details first</h3>
+          <p style={{ color: '#888', margin: '0 0 20px', fontSize: '14px' }}>
+            We need your bank details to release payments when a client approves a milestone.
+          </p>
+          <button onClick={() => router.push('/settings/bank-details')}
+            style={{ background: '#1D9E75', color: 'white', border: 'none', padding: '12px 24px', borderRadius: '8px', cursor: 'pointer', fontWeight: 600 }}>
+            Add bank details
+          </button>
+        </div>
+      </div>
+    )
+  }
 
   return (
     <div style={{ background: '#f5f5f0', minHeight: '100vh', fontFamily: 'sans-serif' }}>

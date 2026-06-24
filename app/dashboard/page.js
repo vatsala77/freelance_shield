@@ -222,7 +222,7 @@ const [submissionNote, setSubmissionNote] = useState('')
         <div style={{ background: 'white', border: '1px solid #e5e5e5', borderRadius: '12px', overflow: 'hidden' }}>
           {filtered.map((p, i) => {
             const totalMilestones = p.milestones?.length || 0
-            const completedMilestones = p.milestones?.filter(m => m.status === 'completed')?.length || 0
+            const completedMilestones = p.milestones?.filter(m => m.status === 'released')?.length || 0
             return (
             <div key={p.id} style={{ padding: '20px 24px', borderBottom: i < filtered.length - 1 ? '1px solid #f0f0f0' : 'none' }}>
               <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: '12px' }}>

@@ -4,6 +4,7 @@ import { useParams } from 'next/navigation'
 import { useSession } from 'next-auth/react'
 import html2canvas from 'html2canvas'
 import jsPDF from 'jspdf'
+
 function loadRazorpayScript() {
   return new Promise((resolve) => {
     if (document.getElementById('razorpay-script')) { resolve(true); return }
@@ -36,33 +37,33 @@ export default function PayPage() {
   const isFreelancer = session?.user?.id === project?.freelancer_id
 
   useEffect(() => {
-  if (!token) return
-  fetch(`/api/pay/${token}`)
-    .then(r => r.json())
-    .then(async data => {
-      if (data.error) { setError(data.error); setLoading(false); return }
-      setProject(data.project)
-      setMilestones(data.milestones)
+    if (!token) return
+    fetch(`/api/pay/${token}`)
+      .then(r => r.json())
+      .then(async data => {
+        if (data.error) { setError(data.error); setLoading(false); return }
+        setProject(data.project)
+        setMilestones(data.milestones)
 
-      const actRes = await fetch(`/api/activity?project_id=${data.project.id}`)
-      const actData = await actRes.json()
+        const actRes = await fetch(`/api/activity?project_id=${data.project.id}`)
+        const actData = await actRes.json()
 
-      if (actData.length > 0) {
-        setActivity(actData.map(a => ({
-          id: a.id,
-          text: a.text,
-          color: a.color,
-          time: new Date(a.created_at).toLocaleString('en-IN', { hour: 'numeric', minute: 'numeric', hour12: true })
-        })))
-      } else {
-        setActivity([
-          { id: 1, text: `Project created by freelancer`, time: 'Earlier', color: '#888' },
-        ])
-      }
-      setLoading(false)
-    })
-    .catch(() => { setError('Failed to load project'); setLoading(false) })
-}, [token])
+        if (actData.length > 0) {
+          setActivity(actData.map(a => ({
+            id: a.id,
+            text: a.text,
+            color: a.color,
+            time: new Date(a.created_at).toLocaleString('en-IN', { hour: 'numeric', minute: 'numeric', hour12: true })
+          })))
+        } else {
+          setActivity([
+            { id: 1, text: `Project created by freelancer`, time: 'Earlier', color: '#888' },
+          ])
+        }
+        setLoading(false)
+      })
+      .catch(() => { setError('Failed to load project'); setLoading(false) })
+  }, [token])
 
   function showToast(msg) {
     setToast(msg)
@@ -70,13 +71,13 @@ export default function PayPage() {
   }
 
   async function addActivity(text, color = '#1D9E75') {
-  await fetch('/api/activity', {
-    method: 'POST',
-    headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify({ project_id: project.id, text, color }),
-  })
-  setActivity(prev => [{ id: Date.now(), text, time: 'Just now', color }, ...prev])
-}
+    await fetch('/api/activity', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ project_id: project.id, text, color }),
+    })
+    setActivity(prev => [{ id: Date.now(), text, time: 'Just now', color }, ...prev])
+  }
 
   const inEscrow = milestones.filter(m => ['funded', 'submitted', 'changes_requested'].includes(m.status)).reduce((a, m) => a + (m.amount_paise / 100), 0)
   const released = milestones.filter(m => m.status === 'released').reduce((a, m) => a + (m.amount_paise / 100), 0)
@@ -105,19 +106,19 @@ export default function PayPage() {
         order_id: order.order_id,
         prefill: { name: project.client_name, email: project.client_email },
         theme: { color: '#1D9E75' },
-       handler: async function () {
-  await fetch('/api/confirm-payment', {
-    method: 'POST',
-    headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify({ milestone_id: milestone.id }),
-  })
+        handler: async function () {
+          await fetch('/api/confirm-payment', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ milestone_id: milestone.id }),
+          })
 
-  setMilestones(prev => prev.map(m =>
-    m.id === milestone.id ? { ...m, status: 'funded' } : m
-  ))
-  addActivity(`${project.client_name} paid ₹${(milestone.amount_paise / 100).toLocaleString('en-IN')} into escrow for "${milestone.title}"`)
-  showToast(`✅ ₹${(milestone.amount_paise / 100).toLocaleString('en-IN')} locked in escrow!`)
-},
+          setMilestones(prev => prev.map(m =>
+            m.id === milestone.id ? { ...m, status: 'funded' } : m
+          ))
+          addActivity(`${project.client_name} paid ₹${(milestone.amount_paise / 100).toLocaleString('en-IN')} into escrow for "${milestone.title}"`)
+          showToast(`✅ ₹${(milestone.amount_paise / 100).toLocaleString('en-IN')} locked in escrow!`)
+        },
         modal: { ondismiss: () => setPaying(false) }
       })
       rzp.open()
@@ -129,58 +130,57 @@ export default function PayPage() {
   }
 
   async function handleApprove(milestone) {
-  const res = await fetch('/api/approve-milestone', {
-    method: 'POST',
-    headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify({ milestone_id: milestone.id }),
-  })
+    const res = await fetch('/api/approve-milestone', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ milestone_id: milestone.id }),
+    })
 
-  
+    const data = await res.json()
+    if (!res.ok) {
+      showToast('Error: ' + data.error)
+      return
+    }
 
-  const data = await res.json()
-  if (!res.ok) {
-    showToast('Error: ' + data.error)
-    return
+    setMilestones(prev => prev.map(m =>
+      m.id === milestone.id ? { ...m, status: 'released' } : m
+    ))
+    addActivity(`You approved "${milestone.title}" — ₹${(milestone.amount_paise / 100).toLocaleString('en-IN')} released to freelancer`)
+    showToast(`🎉 ₹${(milestone.amount_paise / 100).toLocaleString('en-IN')} released to freelancer!`)
   }
 
-  setMilestones(prev => prev.map(m =>
-    m.id === milestone.id ? { ...m, status: 'released' } : m
-  ))
-  addActivity(`You approved "${milestone.title}" — ₹${(milestone.amount_paise / 100).toLocaleString('en-IN')} released to freelancer`)
-  showToast(`🎉 ₹${(milestone.amount_paise / 100).toLocaleString('en-IN')} released to freelancer!`)
-}
-async function downloadReceipt() {
-  const element = document.getElementById('receipt-content')
+  async function downloadReceipt() {
+    const element = document.getElementById('receipt-content')
 
-  const canvas = await html2canvas(element, {
-    scale: 3,
-    useCORS: true,
-    backgroundColor: '#ffffff',
-    logging: false
-  })
+    const canvas = await html2canvas(element, {
+      scale: 3,
+      useCORS: true,
+      backgroundColor: '#ffffff',
+      logging: false
+    })
 
-  const imgData = canvas.toDataURL('image/png', 1.0)
-  const pdf = new jsPDF('p', 'mm', 'a4')
-  const pageWidth = 210
-  const pageHeight = 297
-  const imgWidth = pageWidth - 20
-  const imgHeight = (canvas.height * imgWidth) / canvas.width
+    const imgData = canvas.toDataURL('image/png', 1.0)
+    const pdf = new jsPDF('p', 'mm', 'a4')
+    const pageWidth = 210
+    const pageHeight = 297
+    const imgWidth = pageWidth - 20
+    const imgHeight = (canvas.height * imgWidth) / canvas.width
 
-  let heightLeft = imgHeight
-  let position = 10
+    let heightLeft = imgHeight
+    let position = 10
 
-  pdf.addImage(imgData, 'PNG', 10, position, imgWidth, imgHeight, undefined, 'FAST')
-  heightLeft -= (pageHeight - 20)
-
-  while (heightLeft > 0) {
-    position = heightLeft - imgHeight + 10
-    pdf.addPage()
     pdf.addImage(imgData, 'PNG', 10, position, imgWidth, imgHeight, undefined, 'FAST')
-    heightLeft -= pageHeight
-  }
+    heightLeft -= (pageHeight - 20)
 
-  pdf.save(`FreelanceShield-Receipt-${project.title.replace(/\s+/g, '-')}.pdf`)
-}
+    while (heightLeft > 0) {
+      position = heightLeft - imgHeight + 10
+      pdf.addPage()
+      pdf.addImage(imgData, 'PNG', 10, position, imgWidth, imgHeight, undefined, 'FAST')
+      heightLeft -= pageHeight
+    }
+
+    pdf.save(`FreelanceShield-Receipt-${project.title.replace(/\s+/g, '-')}.pdf`)
+  }
 
   async function handleRequestChanges() {
     if (!changeNote.trim()) {
@@ -330,7 +330,7 @@ async function downloadReceipt() {
                   <div style={{ display: 'flex', alignItems: 'center', gap: '10px', marginBottom: '6px' }}>
                     <span style={{ background: '#f0f0f0', width: '24px', height: '24px', borderRadius: '50%', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '12px', fontWeight: 600, color: '#111' }}>{m.position}</span>
                     <span style={{ fontWeight: 500, color: '#111' }}>{m.title}</span>
-                    {getStatusBadge(m.status)}
+                    ={getStatusBadge(m.status)}
                   </div>
                   <p style={{ margin: 0, color: '#888', fontSize: '13px' }}>
                     {m.due_date && `📅 Due ${new Date(m.due_date).toLocaleDateString('en-IN', { day: 'numeric', month: 'short', year: 'numeric' })} · `}
@@ -348,16 +348,16 @@ async function downloadReceipt() {
                   )}
                 </div>
 
-               {m.status === 'pending' && (index === 0 || milestones[index - 1].status === 'released') && (
-  isFreelancer ? (
-    <span style={{ color: '#888', fontSize: '13px' }}>⏳ Awaiting client payment</span>
-  ) : (
-    <button onClick={() => handlePay(m)} disabled={paying}
-      style={{ background: '#111', color: 'white', border: 'none', padding: '10px 20px', borderRadius: '8px', cursor: 'pointer', fontWeight: 600, fontSize: '14px' }}>
-      Pay ₹{(m.amount_paise / 100).toLocaleString('en-IN')}
-    </button>
-  )
-)}
+                {m.status === 'pending' && (index === 0 || milestones[index - 1].status === 'released') && (
+                  isFreelancer ? (
+                    <span style={{ color: '#888', fontSize: '13px' }}>⏳ Awaiting client payment</span>
+                  ) : (
+                    <button onClick={() => handlePay(m)} disabled={paying}
+                      style={{ background: '#111', color: 'white', border: 'none', padding: '10px 20px', borderRadius: '8px', cursor: 'pointer', fontWeight: 600, fontSize: '14px' }}>
+                      Pay ₹{(m.amount_paise / 100).toLocaleString('en-IN')}
+                    </button>
+                  )
+                )}
 
                 {m.status === 'funded' && (
                   isFreelancer ? (
@@ -547,110 +547,115 @@ async function downloadReceipt() {
         </div>
       )}
 
- {showReceipt && (
-  <div style={{ position: 'fixed', inset: 0, background: 'rgba(0,0,0,0.5)', zIndex: 1000, display: 'flex', alignItems: 'center', justifyContent: 'center' }}
-    onClick={() => setShowReceipt(false)}>
-    <div id="receipt-content" style={{ background: 'white', borderRadius: '16px', width: '500px', maxHeight: '85vh', overflowY: 'auto' }}
-      onClick={e => e.stopPropagation()}>
+      {/* Integrated Second (Updated) Receipt Modal Block */}
+      {showReceipt && (
+        <div style={{ position: 'fixed', inset: 0, background: 'rgba(0,0,0,0.5)', zIndex: 1000, display: 'flex', alignItems: 'center', justifyContent: 'center' }}
+          onClick={() => setShowReceipt(false)}>
+          <div style={{ background: 'white', borderRadius: '16px', width: '500px', maxHeight: '85vh', overflowY: 'auto' }}
+            onClick={e => e.stopPropagation()}>
 
-      <div style={{ background: '#1D9E75', padding: '24px', borderRadius: '16px 16px 0 0', display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start' }}>
-        <div>
-          <h2 style={{ margin: '0 0 4px', color: 'white', fontSize: '20px' }}>FreelanceShield</h2>
-          <p style={{ margin: 0, color: 'rgba(255,255,255,0.8)', fontSize: '13px' }}>Escrow Payment Receipt</p>
-        </div>
-        <div style={{ textAlign: 'right' }}>
-          <p style={{ margin: '0 0 4px', color: 'white', fontSize: '13px', fontWeight: 600 }}>Receipt #{project.id.slice(0, 8).toUpperCase()}</p>
-          <p style={{ margin: 0, color: 'rgba(255,255,255,0.8)', fontSize: '12px' }}>
-            {new Date().toLocaleDateString('en-IN', { day: 'numeric', month: 'short', year: 'numeric' })}
-          </p>
-        </div>
-      </div>
+            <div id="receipt-content">
+              <div style={{ background: '#1D9E75', padding: '24px', borderRadius: '16px 16px 0 0', display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start' }}>
+                <div>
+                  <h2 style={{ margin: '0 0 4px', color: 'white', fontSize: '20px' }}>FreelanceShield</h2>
+                  <p style={{ margin: 0, color: 'rgba(255,255,255,0.8)', fontSize: '13px' }}>Escrow Payment Receipt</p>
+                </div>
+                <div style={{ textAlign: 'right' }}>
+                  <p style={{ margin: '0 0 4px', color: 'white', fontSize: '13px', fontWeight: 600 }}>Receipt #{project.id.slice(0, 8).toUpperCase()}</p>
+                  <p style={{ margin: 0, color: 'rgba(255,255,255,0.8)', fontSize: '12px' }}>
+                    {new Date().toLocaleDateString('en-IN', { day: 'numeric', month: 'short', year: 'numeric' })}
+                  </p>
+                </div>
+              </div>
 
-      <div style={{ padding: '24px' }}>
-        <p style={{ margin: '0 0 4px', fontSize: '12px', color: '#888', fontWeight: 600, textTransform: 'uppercase' }}>PROJECT</p>
-        <h3 style={{ margin: '0 0 16px', color: '#111' }}>{project.title}</h3>
+              <div style={{ padding: '24px' }}>
+                <p style={{ margin: '0 0 4px', fontSize: '12px', color: '#888', fontWeight: 600, textTransform: 'uppercase' }}>PROJECT</p>
+                <h3 style={{ margin: '0 0 16px', color: '#111' }}>{project.title}</h3>
 
-        <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '16px', marginBottom: '20px' }}>
-          <div>
-            <p style={{ margin: '0 0 4px', fontSize: '12px', color: '#888' }}>Freelancer</p>
-            <p style={{ margin: 0, fontWeight: 500, color: '#111' }}>{session?.user?.name || 'Freelancer'}</p>
-          </div>
-          <div>
-            <p style={{ margin: '0 0 4px', fontSize: '12px', color: '#888' }}>Client</p>
-            <p style={{ margin: 0, fontWeight: 500, color: '#111' }}>{project.client_name}</p>
-          </div>
-        </div>
+                <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '16px', marginBottom: '20px' }}>
+                  <div>
+                    <p style={{ margin: '0 0 4px', fontSize: '12px', color: '#888' }}>Freelancer</p>
+                    <p style={{ margin: 0, fontWeight: 500, color: '#111' }}>{session?.user?.name || 'Freelancer'}</p>
+                  </div>
+                  <div>
+                    <p style={{ margin: '0 0 4px', fontSize: '12px', color: '#888' }}>Client</p>
+                    <p style={{ margin: 0, fontWeight: 500, color: '#111' }}>{project.client_name}</p>
+                  </div>
+                </div>
 
-        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: '12px', marginBottom: '20px' }}>
-          {[
-            { label: 'TOTAL PROJECT', val: `Rs. ${(project.total_amount_paise / 100).toLocaleString('en-IN')}`, color: '#111' },
-            { label: 'IN ESCROW', val: `Rs. ${inEscrow.toLocaleString('en-IN')}`, color: '#1D9E75' },
-            { label: 'RELEASED', val: `Rs. ${released.toLocaleString('en-IN')}`, color: '#111' },
-          ].map(s => (
-            <div key={s.label} style={{ background: '#f9f9f9', borderRadius: '8px', padding: '12px', textAlign: 'center' }}>
-              <p style={{ margin: '0 0 4px', fontSize: '10px', color: '#888', fontWeight: 600 }}>{s.label}</p>
-              <p style={{ margin: 0, fontWeight: 700, color: s.color, fontSize: '15px' }}>{s.val}</p>
+                <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: '12px', marginBottom: '20px' }}>
+                  {[
+                    { label: 'TOTAL PROJECT', val: `Rs. ${(project.total_amount_paise / 100).toLocaleString('en-IN')}`, color: '#111' },
+                    { label: 'IN ESCROW', val: `Rs. ${inEscrow.toLocaleString('en-IN')}`, color: '#1D9E75' },
+                    { label: 'RELEASED', val: `Rs. ${released.toLocaleString('en-IN')}`, color: '#111' },
+                  ].map(s => (
+                    <div key={s.label} style={{ background: '#f9f9f9', borderRadius: '8px', padding: '12px', textAlign: 'center' }}>
+                      <p style={{ margin: '0 0 4px', fontSize: '10px', color: '#888', fontWeight: 600 }}>{s.label}</p>
+                      <p style={{ margin: 0, fontWeight: 700, color: s.color, fontSize: '15px' }}>{s.val}</p>
+                    </div>
+                  ))}
+                </div>
+
+                <p style={{ margin: '0 0 8px', fontWeight: 600, color: '#111' }}>Milestones</p>
+                <table style={{ width: '100%', borderCollapse: 'collapse', marginBottom: '20px' }}>
+                  <thead>
+                    <tr style={{ borderBottom: '1px solid #e5e5e5' }}>
+                      {['#', 'Milestone', 'Status', 'Amount'].map(h => (
+                        <th key={h} style={{ padding: '8px', textAlign: 'left', fontSize: '11px', color: '#888', fontWeight: 600 }}>{h}</th>
+                      ))}
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {milestones.map(m => (
+                      <tr key={m.id} style={{ borderBottom: '1px solid #f0f0f0' }}>
+                        <td style={{ padding: '10px 8px', fontSize: '13px', color: '#888' }}>{m.position}</td>
+                        <td style={{ padding: '10px 8px', fontSize: '13px', color: '#111' }}>{m.title}</td>
+                        <td style={{ padding: '10px 8px', fontSize: '12px', color: m.status === 'released' ? '#1D9E75' : '#888' }}>
+                          {m.status === 'released' ? 'Released' : m.status === 'submitted' ? 'Work submitted' : m.status === 'funded' ? 'In escrow' : m.status === 'changes_requested' ? 'Changes requested' : 'Awaiting payment'}
+                        </td>
+                        <td style={{ padding: '10px 8px', fontSize: '13px', fontWeight: 600, color: '#111' }}>Rs. {(m.amount_paise / 100).toLocaleString('en-IN')}</td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+
+                <p style={{ margin: '0 0 8px', fontWeight: 600, color: '#111' }}>Activity timeline</p>
+                {activity.slice(0, 6).map(a => (
+                  <div key={a.id} style={{ display: 'flex', gap: '10px', marginBottom: '8px', alignItems: 'flex-start' }}>
+                    <div style={{ width: '8px', height: '8px', borderRadius: '50%', background: a.color, marginTop: '5px', flexShrink: 0 }} />
+                    <div>
+                      <p style={{ margin: '0 0 2px', fontSize: '12px', color: '#111' }}>{a.text}</p>
+                      <p style={{ margin: 0, fontSize: '11px', color: '#888' }}>{a.time}</p>
+                    </div>
+                  </div>
+                ))}
+
+                <div style={{ borderTop: '1px solid #e5e5e5', marginTop: '20px', paddingTop: '12px' }}>
+                  <p style={{ margin: 0, fontSize: '11px', color: '#aaa' }}>
+                    Powered by Razorpay Route. Funds held in an RBI-regulated escrow account.
+                  </p>
+                  <p style={{ margin: '4px 0 0', fontSize: '11px', color: '#1D9E75' }}>
+                    freelanceshield.in &nbsp;·&nbsp; support@freelanceshield.in
+                  </p>
+                </div>
+              </div>
             </div>
-          ))}
-        </div>
 
-        <p style={{ margin: '0 0 8px', fontWeight: 600, color: '#111' }}>Milestones</p>
-        <table style={{ width: '100%', borderCollapse: 'collapse', marginBottom: '20px' }}>
-          <thead>
-            <tr style={{ borderBottom: '1px solid #e5e5e5' }}>
-              {['#', 'Milestone', 'Status', 'Amount'].map(h => (
-                <th key={h} style={{ padding: '8px', textAlign: 'left', fontSize: '11px', color: '#888', fontWeight: 600 }}>{h}</th>
-              ))}
-            </tr>
-          </thead>
-          <tbody>
-            {milestones.map(m => (
-              <tr key={m.id} style={{ borderBottom: '1px solid #f0f0f0' }}>
-                <td style={{ padding: '10px 8px', fontSize: '13px', color: '#888' }}>{m.position}</td>
-                <td style={{ padding: '10px 8px', fontSize: '13px', color: '#111' }}>{m.title}</td>
-                <td style={{ padding: '10px 8px', fontSize: '12px', color: m.status === 'released' ? '#1D9E75' : '#888' }}>
-                  {m.status === 'released' ? 'Released' : m.status === 'submitted' ? 'Work submitted' : m.status === 'funded' ? 'In escrow' : m.status === 'changes_requested' ? 'Changes requested' : 'Awaiting payment'}
-                </td>
-                <td style={{ padding: '10px 8px', fontSize: '13px', fontWeight: 600, color: '#111' }}>Rs. {(m.amount_paise / 100).toLocaleString('en-IN')}</td>
-              </tr>
-            ))}
-          </tbody>
-        </table>
-
-        <p style={{ margin: '0 0 8px', fontWeight: 600, color: '#111' }}>Activity timeline</p>
-        {activity.slice(0, 6).map(a => (
-          <div key={a.id} style={{ display: 'flex', gap: '10px', marginBottom: '8px', alignItems: 'flex-start' }}>
-            <div style={{ width: '8px', height: '8px', borderRadius: '50%', background: a.color, marginTop: '5px', flexShrink: 0 }} />
-            <div>
-              <p style={{ margin: '0 0 2px', fontSize: '12px', color: '#111' }}>{a.text}</p>
-              <p style={{ margin: 0, fontSize: '11px', color: '#888' }}>{a.time}</p>
+            <div style={{ padding: '0 24px 24px' }}>
+              <button
+                onClick={downloadReceipt}
+                style={{ width: '100%', padding: '12px', background: '#111', color: 'white', border: 'none', borderRadius: '8px', cursor: 'pointer', fontWeight: 600, marginBottom: '8px' }}>
+                ⬇ Download as PDF
+              </button>
+              <button
+                onClick={() => setShowReceipt(false)}
+                style={{ width: '100%', padding: '12px', background: '#1D9E75', color: 'white', border: 'none', borderRadius: '8px', cursor: 'pointer', fontWeight: 600 }}>
+                Close Receipt
+              </button>
             </div>
           </div>
-        ))}
-
-        <div style={{ borderTop: '1px solid #e5e5e5', marginTop: '20px', paddingTop: '12px' }}>
-          <p style={{ margin: 0, fontSize: '11px', color: '#aaa' }}>
-            Powered by Razorpay Route. Funds held in an RBI-regulated escrow account.
-          </p>
-          <p style={{ margin: '4px 0 0', fontSize: '11px', color: '#1D9E75' }}>
-            freelanceshield.in &nbsp;·&nbsp; support@freelanceshield.in
-          </p>
         </div>
-
-        <button
-          onClick={downloadReceipt}
-          style={{ width: '100%', padding: '12px', background: '#111', color: 'white', border: 'none', borderRadius: '8px', cursor: 'pointer', fontWeight: 600, marginTop: '16px', marginBottom: '8px' }}>
-          ⬇ Download as PDF
-        </button>
-        <button
-          onClick={() => setShowReceipt(false)}
-          style={{ width: '100%', padding: '12px', background: '#1D9E75', color: 'white', border: 'none', borderRadius: '8px', cursor: 'pointer', fontWeight: 600 }}>
-          Close Receipt
-        </button>
-      </div>
-    </div>
-  </div>
-)},
+      )}
 
     </div>
   )
