@@ -301,10 +301,24 @@ export default function PayPage() {
                 <h2 style={{ margin: '0 0 8px', fontSize: '24px', color: '#111' }}>{project.title}</h2>
                 <p style={{ margin: 0, color: '#888', fontSize: '14px' }}>For <strong style={{ color: '#111' }}>{project.client_name}</strong> · {project.client_email}</p>
               </div>
-              <button onClick={() => setShowReceipt(true)}
-                style={{ background: 'white', border: '1px solid #e5e5e5', color: '#111', padding: '8px 16px', borderRadius: '8px', cursor: 'pointer', fontSize: '13px' }}>
-                ⬇ Download receipt
-              </button>
+              
+              {/* WhatsApp Share & Download Receipt Container */}
+              <div style={{ display: 'flex', gap: '8px' }}>
+                {isFreelancer && (
+                  <button
+                    onClick={() => {
+                      const message = `Hi ${project.client_name}! Here's your secure payment link for "${project.title}": ${window.location.href}`
+                      window.open(`https://wa.me/?text=${encodeURIComponent(message)}`, '_blank')
+                    }}
+                    style={{ background: '#25D366', border: 'none', color: 'white', padding: '8px 16px', borderRadius: '8px', cursor: 'pointer', fontSize: '13px', fontWeight: 500, display: 'flex', alignItems: 'center', gap: '6px' }}>
+                    📱 Share on WhatsApp
+                  </button>
+                )}
+                <button onClick={() => setShowReceipt(true)}
+                  style={{ background: 'white', border: '1px solid #e5e5e5', color: '#111', padding: '8px 16px', borderRadius: '8px', cursor: 'pointer', fontSize: '13px' }}>
+                  ⬇ Download receipt
+                </button>
+              </div>
             </div>
 
             <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: '16px', marginTop: '20px' }}>
@@ -546,28 +560,32 @@ export default function PayPage() {
           </div>
         </div>
       )}
-{/* How it works */}
-<div style={{ background: 'white', border: '1px solid #e5e5e5', borderRadius: '12px', padding: '24px', marginTop: '4px', marginBottom: '16px' }}>
-  <h3 style={{ margin: '0 0 16px', fontSize: '15px', fontWeight: 600, color: '#111' }}>
-    🛡️ How are you protected?
-  </h3>
-  {[
-    { num: '1', title: 'Money locks upfront', desc: 'Client pays into secure Razorpay escrow — money does NOT go to freelancer yet.' },
-    { num: '2', title: 'Freelancer delivers work', desc: 'Work is submitted with proof — you get notified to review.' },
-    { num: '3', title: 'You approve & release', desc: 'Only after your approval does the money transfer to freelancer.' },
-    { num: '4', title: 'Ghosting? Get a refund', desc: 'If freelancer disappears, raise a dispute and get a full refund.' },
-  ].map(s => (
-    <div key={s.num} style={{ display: 'flex', gap: '12px', marginBottom: '16px' }}>
-      <div style={{ background: '#1D9E75', color: 'white', width: '28px', height: '28px', borderRadius: '50%', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '13px', fontWeight: 700, flexShrink: 0 }}>
-        {s.num}
-      </div>
-      <div>
-        <p style={{ margin: '0 0 2px', fontWeight: 600, color: '#111', fontSize: '14px' }}>{s.title}</p>
-        <p style={{ margin: 0, color: '#888', fontSize: '13px' }}>{s.desc}</p>
-      </div>
-    </div>
-  ))}
-</div>
+
+      {/* How it works */}
+      {!isFreelancer && (
+        <div style={{ background: 'white', border: '1px solid #e5e5e5', borderRadius: '12px', padding: '24px', marginTop: '4px', marginBottom: '16px' }}>
+          <h3 style={{ margin: '0 0 16px', fontSize: '15px', fontWeight: 600, color: '#111' }}>
+            🛡️ How are you protected?
+          </h3>
+          {[
+            { num: '1', title: 'Money locks upfront', desc: 'Client pays into secure Razorpay escrow — money does NOT go to freelancer yet.' },
+            { num: '2', title: 'Freelancer delivers work', desc: 'Work is submitted with proof — you get notified to review.' },
+            { num: '3', title: 'You approve & release', desc: 'Only after your approval does the money transfer to freelancer.' },
+            { num: '4', title: 'Ghosting? Get a refund', desc: 'If freelancer disappears, raise a dispute and get a full refund.' },
+          ].map(s => (
+            <div key={s.num} style={{ display: 'flex', gap: '12px', marginBottom: '16px' }}>
+              <div style={{ background: '#1D9E75', color: 'white', width: '28px', height: '28px', borderRadius: '50%', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '13px', fontWeight: 700, flexShrink: 0 }}>
+                {s.num}
+              </div>
+              <div>
+                <p style={{ margin: '0 0 2px', fontWeight: 600, color: '#111', fontSize: '14px' }}>{s.title}</p>
+                <p style={{ margin: 0, color: '#888', fontSize: '13px' }}>{s.desc}</p>
+              </div>
+            </div>
+          ))}
+        </div>
+      )}
+
       {/* Integrated Second (Updated) Receipt Modal Block */}
       {showReceipt && (
         <div style={{ position: 'fixed', inset: 0, background: 'rgba(0,0,0,0.5)', zIndex: 1000, display: 'flex', alignItems: 'center', justifyContent: 'center' }}
