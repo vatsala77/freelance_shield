@@ -15,6 +15,8 @@ export default function Dashboard() {
   const [submitFor, setSubmitFor] = useState(null)
   const [submissionLink, setSubmissionLink] = useState('')
   const [submissionNote, setSubmissionNote] = useState('')
+  const [searchQuery, setSearchQuery] = useState('')
+  const [isDropdownOpen, setIsDropdownOpen] = useState(false)
 
   useEffect(() => {
     if (status === 'unauthenticated') {
@@ -40,7 +42,21 @@ export default function Dashboard() {
     fetchProjects()
   }, [status, router])
 
-  const filtered = filter === 'all' ? projects : projects.filter(p => p.status === filter)
+  const filtered = projects.filter(p => {
+    const matchesStatus = filter === 'all' || p.status === filter
+    const cleanQuery = searchQuery.trim().toLowerCase()
+    if (!cleanQuery) return matchesStatus
+
+    const matchesProjectTitle = p.title?.toLowerCase().includes(cleanQuery)
+    const matchesClientName = p.client_name?.toLowerCase().includes(cleanQuery)
+    const matchesClientEmail = p.client_email?.toLowerCase().includes(cleanQuery)
+    const matchesClientPhone = p.client_phone?.toLowerCase().includes(cleanQuery)
+    const matchesMilestoneTitle = p.milestones?.some(m => 
+      m.title?.toLowerCase().includes(cleanQuery)
+    ) || false
+
+    return matchesStatus && (matchesProjectTitle || matchesClientName || matchesClientEmail || matchesClientPhone || matchesMilestoneTitle)
+  })
 
   async function handleSubmitWork() {
     if (!submissionLink.trim()) {
@@ -76,7 +92,6 @@ export default function Dashboard() {
     setSubmissionNote('')
   }
 
-  // Delete Project Client Logic Handler
   async function handleDeleteProject(projectId) {
     const confirmDelete = window.confirm("Are you sure you want to permanently delete this project agreement?")
     if (!confirmDelete) return
@@ -90,7 +105,6 @@ export default function Dashboard() {
         throw new Error(data.error || 'Failed to delete project')
       }
       
-      // Update UI state upon success
       setProjects(prev => prev.filter(p => p.id !== projectId))
       alert('Project deleted successfully.')
     } catch (err) {
@@ -98,181 +112,244 @@ export default function Dashboard() {
     }
   }
 
-  // Calculate escrow stats (Checking milestones to include funded, submitted, changes_requested, and disputed balances)
   const inEscrow = projects
     .filter(p => p.status === 'active')
     .reduce((sum, p) => {
-      const activeMilestonesSum = p.milestones?.reduce((mSum, m) => {
+      return sum + (p.milestones?.reduce((mSum, m) => {
         if (['funded', 'submitted', 'changes_requested', 'disputed', 'Disputed'].includes(m.status)) {
           return mSum + (m.amount_paise / 100)
         }
         return mSum
-      }, 0) || 0
-      return sum + activeMilestonesSum
+      }, 0) || 0)
     }, 0)
   
   const released = projects
     .filter(p => p.status === 'completed' || p.status === 'active')
     .reduce((sum, p) => {
-      const releasedMilestonesSum = p.milestones?.reduce((mSum, m) => {
+      return sum + (p.milestones?.reduce((mSum, m) => {
         if (m.status === 'released') {
           return mSum + (m.amount_paise / 100)
         }
         return mSum
-      }, 0) || 0
-      return sum + releasedMilestonesSum
+      }, 0) || 0)
     }, 0)
 
   if (loading) {
     return (
-      <div style={{ background: '#f5f5f0', minHeight: '100vh', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-        <p style={{ color: '#888', fontFamily: 'sans-serif' }}>Loading projects...</p>
-      </div>
-    )
-  }
-
-  if (error) {
-    return (
-      <div style={{ background: '#f5f5f0', minHeight: '100vh', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-        <p style={{ color: '#e74c3c', fontFamily: 'sans-serif' }}>Error: {error}</p>
+      <div style={{ background: 'linear-gradient(135deg, #d4f7e6 0%, #a7f3d0 100%)', minHeight: '100vh', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+        <p style={{ color: '#1D9E75', fontFamily: 'sans-serif', fontWeight: 600 }}>Loading FreelanceShield Environment...</p>
       </div>
     )
   }
 
   return (
-    <div style={{ background: '#f5f5f0', minHeight: '100vh', fontFamily: '-apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif' }}>
+    <div style={{ 
+      background: 'linear-gradient(180deg, #d4f7e6 0%, #bbf7d0 50%, #a7f3d0 100%)', 
+      minHeight: '100vh', 
+      fontFamily: '-apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif',
+      paddingBottom: '40px'
+    }}>
 
-      {/* Navbar */}
-      <nav style={{
-        background: 'white',
-        display: 'flex',
-        justifyContent: 'space-between',
-        alignItems: 'center',
-        padding: '16px 40px',
-        borderBottom: '1px solid #e5e5e5',
-        position: 'sticky',
-        top: 0,
-        zIndex: 100
-      }}>
-        <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
-          <span style={{
-            background: '#1D9E75', color: 'white', width: '32px', height: '32px',
-            borderRadius: '8px', display: 'flex', alignItems: 'center',
-            justifyContent: 'center', fontWeight: 700
-          }}>F</span>
-          <span style={{ fontWeight: 700, color: '#111', fontSize: '17px', letterSpacing: '-0.01em' }}>FreelanceShield</span>
-        </div>
-
-        <div style={{ display: 'flex', gap: '12px', alignItems: 'center' }}>
-          <span style={{ color: '#888', fontSize: '14px', fontWeight: 500 }}>Dashboard</span>
-          <Link href="/create">
-            <button style={{
-              background: '#1D9E75', color: 'white', border: 'none',
-              padding: '10px 20px', borderRadius: '8px', cursor: 'pointer',
-              fontWeight: 600, fontSize: '14px'
-            }}>
-              New Project
-            </button>
+      {/* Floating Glassmorphism Navbar Layer (Matches image_806c3f.png Specs) */}
+      <div style={{ padding: '16px 20px', position: 'sticky', top: 0, zIndex: 1000 }}>
+        <nav style={{
+          background: 'rgba(255, 255, 255, 0.7)',
+          backdropFilter: 'blur(16px)',
+          WebkitBackdropFilter: 'blur(16px)',
+          display: 'flex',
+          justifyContent: 'space-between',
+          alignItems: 'center',
+          padding: '12px 32px',
+          borderRadius: '16px',
+          border: '1px solid rgba(0, 0, 0, 0.08)',
+          boxShadow: '0 8px 32px rgba(29, 158, 117, 0.08)',
+          maxWidth: '1200px',
+          margin: '0 auto'
+        }}>
+          {/* Logo Brand Anchor Node with Glow Parameters matching image_8a6541.png */}
+          <Link href="/" style={{ textDecoration: 'none' }} className="brand-logo-container">
+            <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
+              <span className="logo-box" style={{
+                background: '#1D9E75', color: 'white', width: '32px', height: '32px',
+                borderRadius: '8px', display: 'flex', alignItems: 'center',
+                justifyContent: 'center', fontWeight: 700, fontSize: '15px',
+                transition: 'all 0.2s ease'
+              }}>F</span>
+              <span className="brand-text" style={{ 
+                fontWeight: 700, color: '#111827', fontSize: '18px', 
+                letterSpacing: '-0.02em', transition: 'all 0.2s ease' 
+              }}>FreelanceShield</span>
+            </div>
           </Link>
-          <button
-            onClick={() => signOut({ callbackUrl: '/login' })}
-            style={{
-              background: 'white', border: '1px solid #e5e5e5', color: '#111',
-              padding: '10px 16px', borderRadius: '8px', cursor: 'pointer',
-              fontWeight: 600, fontSize: '14px'
-            }}>
-            Logout
-          </button>
-        </div>
-      </nav>
 
-      <div style={{ maxWidth: '940px', margin: '40px auto', padding: '0 20px' }}>
+          {/* Desktop Right Navigation Controls Array */}
+          <div style={{ display: 'flex', alignItems: 'center', gap: '28px' }} className="desktop-nav-menu">
+            <Link href="/dashboard" style={{ textDecoration: 'none', position: 'relative', paddingBottom: '4px' }} className="nav-item active-link">
+              <span className="nav-text">Dashboard</span>
+              <div style={{ position: 'absolute', bottom: 0, left: 0, right: 0, height: '2.5px', background: '#1D9E75', borderRadius: '2px' }} />
+            </Link>
+            
+            <Link href="/settings" style={{ textDecoration: 'none', position: 'relative', paddingBottom: '4px' }} className="nav-item">
+              <span className="nav-text">Settings</span>
+            </Link>
 
-        {/* Header Title Grid */}
-        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '32px' }}>
-          <div>
-            <h2 style={{ margin: '0 0 6px', fontSize: '32px', fontWeight: 800, color: '#111', letterSpacing: '-0.02em' }}>Your Projects</h2>
-            <p style={{ margin: 0, color: '#666', fontSize: '14px' }}>Welcome back, <strong style={{ color: '#111' }}>{session?.user?.name || 'User'}</strong>. Track your dynamic escrow pipelines.</p>
+            {/* Renamed Link Element Configuration Node */}
+            <Link href="/create" style={{ textDecoration: 'none', position: 'relative', paddingBottom: '4px' }} className="nav-item">
+              <span className="nav-text">Create Project</span>
+            </Link>
+
+            <button
+              onClick={() => signOut({ callbackUrl: '/login' })}
+              style={{
+                background: 'rgba(11, 15, 29, 0.06)', border: '1px solid rgba(0, 0, 0, 0.05)', color: '#111827',
+                padding: '8px 18px', borderRadius: '8px', cursor: 'pointer',
+                fontWeight: 600, fontSize: '13px', transition: 'all 0.2s'
+              }}>
+              Logout
+            </button>
           </div>
-          <Link href="/create">
-            <button style={{
-              background: '#1D9E75', color: 'white', border: 'none',
-              padding: '12px 24px', borderRadius: '8px', cursor: 'pointer',
-              fontWeight: 600, fontSize: '14px', boxShadow: '0 2px 6px rgba(29,158,117,0.15)'
-            }}>
-              + Create Agreement
-            </button>
-          </Link>
+
+          {/* Mobile Menu Toggler Menu Icon Node */}
+          <div 
+            onClick={() => setIsDropdownOpen(!isDropdownOpen)}
+            style={{ display: 'none', cursor: 'pointer', fontSize: '20px', color: '#111827' }}
+            className="mobile-menu-burger-icon"
+          >
+            ☰
+          </div>
+        </nav>
+
+        {/* Responsive Mobile Layout Dropdown Block */}
+        {isDropdownOpen && (
+          <div style={{
+            margin: '8px auto 0',
+            maxWidth: '1200px',
+            background: 'rgba(255, 255, 255, 0.95)',
+            backdropFilter: 'blur(10px)',
+            borderRadius: '12px',
+            border: '1px solid rgba(0, 0, 0, 0.08)',
+            padding: '16px 24px',
+            display: 'flex',
+            flexDirection: 'column',
+            gap: '14px',
+            boxShadow: '0 10px 25px rgba(0,0,0,0.05)'
+          }}>
+            <Link href="/dashboard" onClick={() => setIsDropdownOpen(false)} style={{ textDecoration: 'none', color: '#1D9E75', fontWeight: 700, fontSize: '14px' }}>Dashboard</Link>
+            <Link href="/settings" onClick={() => setIsDropdownOpen(false)} style={{ textDecoration: 'none', color: '#4b5563', fontWeight: 600, fontSize: '14px' }}>Settings</Link>
+            <Link href="/create" onClick={() => setIsDropdownOpen(false)} style={{ textDecoration: 'none', color: '#4b5563', fontWeight: 600, fontSize: '14px' }}>Create Project</Link>
+            <button onClick={() => signOut({ callbackUrl: '/login' })} style={{ width: '100%', textAlign: 'left', background: 'none', border: 'none', color: '#e74c3c', padding: '4px 0', fontWeight: 600, fontSize: '14px', cursor: 'pointer' }}>Logout</button>
+          </div>
+        )}
+      </div>
+
+      {/* Main Layout Presentation Wrapper Sheet */}
+      <div style={{ maxWidth: '940px', margin: '20px auto', padding: '0 20px' }}>
+
+        {/* Header Branding Context Header Block */}
+        <div style={{ marginBottom: '32px' }}>
+          <h2 style={{ margin: '0 0 6px', fontSize: '32px', fontWeight: 800, color: '#111827', letterSpacing: '-0.02em' }}>Your Projects</h2>
+          <p style={{ margin: 0, color: '#273142', fontSize: '14px', fontWeight: 600 }}>Welcome back, <strong style={{ color: '#111827' }}>{session?.user?.name || 'User'}</strong>. Track your dynamic escrow pipelines.</p>
         </div>
 
-        {/* Metric Cards Structure */}
-        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: '16px', marginBottom: '36px' }}>
+        {/* Glassmorphic Metric Cards Grid Block with Custom Borders */}
+        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(240px, 1fr))', gap: '16px', marginBottom: '36px' }}>
           {[
-            { label: 'In Escrow Active', val: `₹${inEscrow.toLocaleString('en-IN')}`, sub: `${projects.filter(p => p.status === 'active').length} Active Contracts`, bg: '#e8f5ef', color: '#1D9E75' },
-            { label: 'Released Balance', val: `₹${released.toLocaleString('en-IN')}`, sub: 'Settled to Verified Bank', bg: 'white', color: '#111' },
-            { label: 'Total Deal Pipelines', val: `${projects.length}`, sub: `${projects.filter(p => p.status === 'completed').length} Milestone Closures`, bg: 'white', color: '#111' },
+            { label: 'In Escrow Active', val: `₹${inEscrow.toLocaleString('en-IN')}`, sub: `${projects.filter(p => p.status === 'active').length} Active Contracts`, bg: 'rgba(255, 255, 255, 0.45)', color: '#1D9E75' },
+            { label: 'Released Balance', val: `₹${released.toLocaleString('en-IN')}`, sub: 'Settled to Verified Bank', bg: 'rgba(255, 255, 255, 0.55)', color: '#111827' },
+            { label: 'Total Deal Pipelines', val: `${projects.length}`, sub: `${projects.filter(p => p.status === 'completed').length} Milestone Closures`, bg: 'rgba(255, 255, 255, 0.55)', color: '#111827' },
           ].map(s => (
-            <div key={s.label} style={{ background: s.bg, border: '1px solid #e5e5e5', borderRadius: '12px', padding: '24px', boxShadow: '0 1px 3px rgba(0,0,0,0.01)' }}>
-              <p style={{ margin: '0 0 8px', fontSize: '12px', color: '#666', fontWeight: 600, textTransform: 'uppercase', letterSpacing: '0.02em' }}>{s.label}</p>
-              <p style={{ margin: '0 0 4px', fontSize: '32px', fontWeight: 800, color: s.color, letterSpacing: '-0.02em' }}>{s.val}</p>
-              <p style={{ margin: 0, fontSize: '13px', color: '#666', fontWeight: 500 }}>{s.sub}</p>
+            <div key={s.label} style={{ 
+              background: s.bg, 
+              backdropFilter: 'blur(8px)',
+              border: '1px solid rgba(0, 0, 0, 0.08)', 
+              borderRadius: '14px', 
+              padding: '24px', 
+              boxShadow: '0 4px 20px rgba(29, 158, 117, 0.01)'
+            }}>
+              <p style={{ margin: '0 0 8px', fontSize: '11px', color: '#374151', fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.05em' }}>{s.label}</p>
+              <p style={{ margin: '0 0 4px', fontSize: '30px', fontWeight: 800, color: s.color, letterSpacing: '-0.02em' }}>{s.val}</p>
+              <p style={{ margin: 0, fontSize: '13px', color: '#4b5563', fontWeight: 500 }}>{s.sub}</p>
             </div>
           ))}
         </div>
 
-        {/* Filter Navigation Tabs */}
-        <div style={{ display: 'flex', gap: '8px', marginBottom: '20px', alignItems: 'center' }}>
+        {/* Global Omni-Search Filtering Box with Smooth Border Layout Node */}
+        <div style={{ marginBottom: '24px' }}>
+          <input 
+            type="text" 
+            value={searchQuery}
+            onChange={(e) => setSearchQuery(e.target.value)}
+            placeholder="🔍 Search contracts by project name, client profile metadata, or milestone phase details..." 
+            style={{
+              width: '100%',
+              padding: '14px 18px',
+              borderRadius: '12px',
+              border: '1px solid rgba(0, 0, 0, 0.08)',
+              background: 'rgba(255, 255, 255, 0.75)',
+              backdropFilter: 'blur(4px)',
+              color: '#111827',
+              fontSize: '14px',
+              boxSizing: 'border-box',
+              outline: 'none',
+              fontWeight: 500
+            }}
+          />
+        </div>
+
+        {/* Filter Navigation Tabs Element Cluster */}
+        <div style={{ display: 'flex', gap: '8px', marginBottom: '24px', alignItems: 'center', flexWrap: 'wrap' }}>
           {['all', 'active', 'completed'].map(f => (
             <button key={f} onClick={() => setFilter(f)}
               style={{
-                padding: '8px 20px', borderRadius: '20px', border: '1px solid #e5e5e5',
-                background: filter === f ? '#111' : 'white',
-                color: filter === f ? 'white' : '#666',
+                padding: '8px 20px', borderRadius: '20px', 
+                border: '1px solid rgba(0, 0, 0, 0.08)',
+                background: filter === f ? '#111827' : 'rgba(255, 255, 255, 0.6)',
+                color: filter === f ? 'white' : '#374151',
                 cursor: 'pointer', fontSize: '13px', fontWeight: 600,
                 textTransform: 'capitalize', transition: 'all 0.15s'
               }}>
               {f}
             </button>
           ))}
-          <span style={{ marginLeft: 'auto', color: '#666', fontSize: '13px', fontWeight: 500 }}>Showing {filtered.length} projects</span>
+          <span style={{ marginLeft: 'auto', color: '#111827', fontSize: '13px', fontWeight: 600 }}>
+            Showing {filtered.length} projects
+          </span>
         </div>
 
-        {/* Separated Project Cards Container */}
+        {/* Project Contract Record Container Feeds Matrix */}
         <div style={{ display: 'flex', flexDirection: 'column', gap: '20px', marginBottom: '40px' }}>
           {filtered.map((p) => {
             const totalMilestones = p.milestones?.length || 0
             const completedMilestones = p.milestones?.filter(m => m.status === 'released')?.length || 0
-            
-            // SECURITY CHECK: If any milestone is funded, submitted, requested changes, or disputed -> Deletion is strictly BLOCKED
             const safeToDelete = !p.milestones?.some(m => 
               ['funded', 'submitted', 'changes_requested', 'disputed', 'Disputed', 'released'].includes(m.status)
             )
 
             return (
               <div key={p.id} style={{ 
-                background: 'white', 
-                border: '1px solid #e5e5e5', 
-                borderRadius: '14px', 
-                padding: '28px',
-                boxShadow: '0 4px 12px rgba(0,0,0,0.015)'
+                background: 'rgba(255, 255, 255, 0.6)', 
+                backdropFilter: 'blur(10px)',
+                border: '1px solid rgba(0, 0, 0, 0.08)', 
+                borderRadius: '16px', 
+                padding: '24px'
               }}>
-                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: '16px' }}>
-                  <div style={{ flex: 1, minWidth: 0, marginRight: '16px' }}>
+                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: '16px', flexWrap: 'wrap', gap: '12px' }}>
+                  <div style={{ flex: 1, minWidth: 0 }}>
                     <div style={{ display: 'flex', alignItems: 'center', gap: '12px', marginBottom: '6px', flexWrap: 'wrap' }}>
-                      <span style={{ fontWeight: 700, color: '#111', fontSize: '18px', letterSpacing: '-0.01em' }}>{p.title}</span>
+                      <span style={{ fontWeight: 800, color: '#111827', fontSize: '18px', letterSpacing: '-0.01em' }}>{p.title}</span>
                       <span style={{
                         background: p.status === 'active' ? '#e8f5ef' : '#f3f4f6',
                         color: p.status === 'active' ? '#1D9E75' : '#4b5563',
-                        padding: '3px 12px', borderRadius: '20px', fontSize: '12px', fontWeight: 600
+                        padding: '3px 12px', borderRadius: '20px', fontSize: '11px', fontWeight: 700
                       }}>
                         {p.status === 'active' ? '● Active' : '✓ Completed'}
                       </span>
                     </div>
-                    <p style={{ margin: 0, color: '#666', fontSize: '14px', fontWeight: 500 }}>Client Account: <strong style={{ color: '#111' }}>{p.client_name}</strong></p>
+                    <p style={{ margin: 0, color: '#374151', fontSize: '13px', fontWeight: 600 }}>Client Account: <strong style={{ color: '#111827' }}>{p.client_name}</strong></p>
                   </div>
 
-                  <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
-                    <span style={{ fontWeight: 800, color: '#111', fontSize: '18px', marginRight: '4px', letterSpacing: '-0.01em' }}>
+                  <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
+                    <span style={{ fontWeight: 800, color: '#111827', fontSize: '17px', marginRight: '4px' }}>
                       ₹{(p.total_amount_paise / 100).toLocaleString('en-IN')}
                     </span>
                     <Link href={`/project/${p.id}`}>
@@ -281,26 +358,24 @@ export default function Dashboard() {
                       </button>
                     </Link>
                     <Link href={`/pay/${p.invite_token}`}>
-                      <button style={{ background: 'white', border: '1px solid #e5e7eb', color: '#111', padding: '8px 16px', borderRadius: '8px', cursor: 'pointer', fontSize: '13px', fontWeight: 600 }}>
+                      <button style={{ background: 'white', border: '1px solid rgba(0, 0, 0, 0.08)', color: '#111827', padding: '8px 16px', borderRadius: '8px', cursor: 'pointer', fontSize: '13px', fontWeight: 600 }}>
                         View Link ↗
                       </button>
                     </Link>
 
-                    {/* Dynamic Delete Conditional Node Action */}
                     <button 
                       onClick={() => handleDeleteProject(p.id)}
                       disabled={!safeToDelete}
-                      title={safeToDelete ? "Delete this empty project agreement" : "Security Lock: Ongoing escrow funding or active dispute logs exist."}
+                      title={safeToDelete ? "Delete project agreement" : "Security Lock active."}
                       style={{ 
                         background: 'none', 
-                        border: '1px solid #e5e7eb', 
+                        border: '1px solid rgba(231, 76, 60, 0.2)', 
                         color: safeToDelete ? '#e74c3c' : '#ccc', 
                         padding: '8px 12px', 
                         borderRadius: '8px', 
                         cursor: safeToDelete ? 'pointer' : 'not-allowed', 
-                        fontSize: '13px', 
-                        fontWeight: 500,
-                        backgroundColor: safeToDelete ? 'transparent' : '#fafafa'
+                        fontSize: '13px',
+                        backgroundColor: safeToDelete ? 'rgba(231, 76, 60, 0.02)' : '#fafafa'
                       }}
                     >
                       🗑️
@@ -309,29 +384,29 @@ export default function Dashboard() {
                 </div>
 
                 {p.milestones?.some(m => ['disputed', 'Disputed'].includes(m.status)) && (
-                  <div style={{ background: '#fffbeb', color: '#b45309', padding: '10px 14px', borderRadius: '8px', fontSize: '13px', marginBottom: '16px', display: 'flex', alignItems: 'center', gap: '6px', fontWeight: 600, border: '1px solid #fef3c7' }}>
-                    ⚠️ Ongoing Escrow Dispute Raised — Our platform panel is securely auditing this block.
+                  <div style={{ background: '#fffbeb', color: '#b45309', padding: '10px 14px', borderRadius: '8px', fontSize: '13px', marginBottom: '16px', fontWeight: 600, border: '1px solid #fef3c7' }}>
+                    ⚠️ Ongoing Escrow Dispute Raised — Platform panel is securely auditing this contract block.
                   </div>
                 )}
 
                 {p.milestones?.some(m => m.status === 'changes_requested') && (
-                  <div style={{ background: '#fdeeee', color: '#e74c3c', padding: '10px 14px', borderRadius: '8px', fontSize: '13px', marginBottom: '16px', display: 'flex', alignItems: 'center', gap: '6px', fontWeight: 500 }}>
+                  <div style={{ background: '#fdeeee', color: '#e74c3c', padding: '10px 14px', borderRadius: '8px', fontSize: '13px', marginBottom: '16px', fontWeight: 500 }}>
                     🔄 Client requested updates — <Link href={`/pay/${p.invite_token}`} style={{ color: '#e74c3c', fontWeight: 700, textDecoration: 'underline' }}>Review Details</Link>
                   </div>
                 )}
 
-                {/* Sub-Milestones Internal Tracking Rows */}
-                <div style={{ background: '#fafafa', borderRadius: '10px', padding: '8px 16px', marginBottom: '16px', border: '1px solid #f3f4f6' }}>
+                {/* Sub-Milestones Container Grid Matrix Area */}
+                <div style={{ background: 'rgba(255, 255, 255, 0.4)', borderRadius: '10px', padding: '6px 16px', marginBottom: '16px', border: '1px solid rgba(0, 0, 0, 0.06)' }}>
                   {p.milestones?.map(m => (
-                    <div key={m.id} style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: '12px 0', borderBottom: '1px solid #f1f5f9' }}>
+                    <div key={m.id} style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: '12px 0', borderBottom: '1px solid rgba(0,0,0,0.04)' }}>
                       <div>
-                        <span style={{ fontSize: '14px', color: '#111', fontWeight: 600 }}>{m.title}</span>
-                        <span style={{ fontSize: '13px', color: '#666', marginLeft: '8px', fontWeight: 500 }}>₹{(m.amount_paise / 100).toLocaleString('en-IN')}</span>
+                        <span style={{ fontSize: '14px', color: '#111827', fontWeight: 600 }}>{m.title}</span>
+                        <span style={{ fontSize: '13px', color: '#4b5563', marginLeft: '8px', fontWeight: 500 }}>₹{(m.amount_paise / 100).toLocaleString('en-IN')}</span>
                       </div>
                       
                       <div>
                         {m.status === 'funded' && (
-                          <button onClick={() => setSubmitFor(m.id)} style={{ background: '#111', color: 'white', border: 'none', padding: '6px 14px', borderRadius: '6px', cursor: 'pointer', fontSize: '12px', fontWeight: 600 }}>
+                          <button onClick={() => setSubmitFor(m.id)} style={{ background: '#111827', color: 'white', border: 'none', padding: '6px 14px', borderRadius: '6px', cursor: 'pointer', fontSize: '12px', fontWeight: 600 }}>
                             Submit Work
                           </button>
                         )}
@@ -342,26 +417,26 @@ export default function Dashboard() {
                         )}
                         {m.status === 'submitted' && <span style={{ fontSize: '13px', color: '#f59e0b', fontWeight: 600 }}>Awaiting Review</span>}
                         {m.status === 'released' && <span style={{ fontSize: '13px', color: '#1D9E75', fontWeight: 600 }}>✅ Released</span>}
-                        {m.status === 'pending' && <span style={{ fontSize: '13px', color: '#888', fontWeight: 500 }}>Awaiting Payment</span>}
+                        {m.status === 'pending' && <span style={{ fontSize: '13px', color: '#6b7280', fontWeight: 500 }}>Awaiting Payment</span>}
                         {['disputed', 'Disputed'].includes(m.status) && <span style={{ fontSize: '13px', color: '#b45309', fontWeight: 700 }}>🛑 Under Dispute</span>}
                       </div>
                     </div>
                   ))}
                 </div>
 
-                {/* Custom Progress Bar Segment */}
+                {/* Progress Tracking Metric Configuration */}
                 <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
-                  <span style={{ fontSize: '13px', color: '#666', fontWeight: 500 }}>
+                  <span style={{ fontSize: '12px', color: '#374151', fontWeight: 600 }}>
                     {completedMilestones} of {totalMilestones} milestones cleared
                   </span>
-                  <div style={{ flex: 1, background: '#e5e7eb', borderRadius: '4px', height: '6px' }}>
+                  <div style={{ flex: 1, background: 'rgba(0,0,0,0.06)', borderRadius: '4px', height: '6px' }}>
                     <div style={{
                       background: '#1D9E75', height: '6px', borderRadius: '4px',
                       width: `${totalMilestones > 0 ? (completedMilestones / totalMilestones) * 100 : 0}%`,
                       transition: 'width 0.4s'
                     }} />
                   </div>
-                  <span style={{ fontSize: '13px', color: '#111', fontWeight: 600 }}>
+                  <span style={{ fontSize: '12px', color: '#111827', fontWeight: 700 }}>
                     {totalMilestones > 0 ? Math.round((completedMilestones / totalMilestones) * 100) : 0}%
                   </span>
                 </div>
@@ -370,44 +445,101 @@ export default function Dashboard() {
           })}
         </div>
 
-        {/* Empty Fallback Block */}
+        {/* Empty State Fallback Anchor */}
         {filtered.length === 0 && (
-          <div style={{ textAlign: 'center', padding: '60px 20px', background: 'white', borderRadius: '12px', border: '1px solid #e5e5e5' }}>
+          <div style={{ textAlign: 'center', padding: '60px 20px', background: 'rgba(255, 255, 255, 0.5)', backdropFilter: 'blur(4px)', borderRadius: '12px', border: '1px solid rgba(0, 0, 0, 0.08)' }}>
             <p style={{ fontSize: '36px', margin: '0 0 12px' }}>🛡️</p>
-            <h3 style={{ margin: '0 0 8px', color: '#111', fontWeight: 700 }}>No projects found</h3>
-            <p style={{ color: '#666', margin: '0 0 20px', fontSize: '14px' }}>Deploy a brand new protected project milestone framework to begin.</p>
-            <Link href="/create">
-              <button style={{ background: '#1D9E75', color: 'white', border: 'none', padding: '12px 24px', borderRadius: '8px', cursor: 'pointer', fontWeight: 600 }}>
-                Create First Project
-              </button>
-            </Link>
+            <h3 style={{ margin: '0 0 8px', color: '#111827', fontWeight: 700 }}>No project matches found</h3>
+            <p style={{ color: '#4b5563', margin: '0 0 20px', fontSize: '14px' }}>No contract entries match your query tracking specifications.</p>
+            <button 
+              onClick={() => { setSearchQuery(''); setFilter('all'); }} 
+              style={{ background: '#1D9E75', color: 'white', border: 'none', padding: '12px 24px', borderRadius: '8px', cursor: 'pointer', fontWeight: 600 }}
+            >
+              Reset Filters
+            </button>
           </div>
         )}
       </div>
 
       {/* Pop-up Modal Box Layer for Deliverables Submission */}
       {submitFor && (
-        <div style={{ position: 'fixed', inset: 0, background: 'rgba(0,0,0,0.5)', zIndex: 1000, display: 'flex', alignItems: 'center', justifyContent: 'center' }} onClick={() => setSubmitFor(null)}>
-          <div style={{ background: 'white', borderRadius: '16px', width: '420px', padding: '28px', boxShadow: '0 20px 60px rgba(0,0,0,0.2)' }} onClick={e => e.stopPropagation()}>
+        <div style={{ position: 'fixed', inset: 0, background: 'rgba(0,0,0,0.4)', zIndex: 2000, display: 'flex', alignItems: 'center', justifyContent: 'center' }} onClick={() => setSubmitFor(null)}>
+          <div style={{ background: 'white', border: '1px solid rgba(0,0,0,0.08)', borderRadius: '16px', width: '420px', padding: '28px' }} onClick={e => e.stopPropagation()}>
             <div style={{ display: 'flex', alignItems: 'center', gap: '10px', marginBottom: '8px' }}>
               <span style={{ background: '#e8f5ef', color: '#1D9E75', width: '32px', height: '32px', borderRadius: '50%', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '16px' }}>📤</span>
-              <h3 style={{ margin: 0, color: '#111', fontSize: '18px', fontWeight: 700 }}>Submit Work Progress</h3>
+              <h3 style={{ margin: 0, color: '#111827', fontSize: '18px', fontWeight: 700 }}>Submit Deliverables</h3>
             </div>
-            <p style={{ margin: '0 0 16px', color: '#666', fontSize: '13px' }}>Provide verification assets or sharing URLs (Drive, GitHub, Figma).</p>
+            <p style={{ margin: '0 0 16px', color: '#4b5563', fontSize: '13px' }}>Provide sharing links or production assets urls for client confirmation.</p>
             
-            <label style={{ fontSize: '13px', color: '#555', fontWeight: 600 }}>Submission Proof Link *</label>
-            <input value={submissionLink} onChange={e => setSubmissionLink(e.target.value)} placeholder="https://github.com/..." style={{ width: '100%', padding: '12px 14px', border: '1px solid #ddd', borderRadius: '10px', fontSize: '14px', marginTop: '4px', marginBottom: '16px', boxSizing: 'border-box', background: '#f9f9f9', color: '#111', outline: 'none' }} />
+            <label style={{ fontSize: '13px', color: '#374151', fontWeight: 600 }}>Submission Proof Link *</label>
+            <input value={submissionLink} onChange={e => setSubmissionLink(e.target.value)} placeholder="https://github.com/..." style={{ width: '100%', padding: '12px 14px', border: '1px solid #d1d5db', borderRadius: '10px', fontSize: '14px', marginTop: '4px', marginBottom: '16px', boxSizing: 'border-box', background: '#f9fafb', color: '#111827', outline: 'none' }} />
 
-            <label style={{ fontSize: '13px', color: '#555', fontWeight: 600 }}>Optional Notes</label>
-            <textarea value={submissionNote} onChange={e => setSubmissionNote(e.target.value)} placeholder="Message instructions for client review..." rows={3} style={{ width: '100%', padding: '12px 14px', border: '1px solid #ddd', borderRadius: '10px', fontSize: '14px', marginTop: '4px', marginBottom: '20px', boxSizing: 'border-box', resize: 'vertical', background: '#f9f9f9', color: '#111', outline: 'none', fontFamily: 'sans-serif' }} />
+            <label style={{ fontSize: '13px', color: '#374151', fontWeight: 600 }}>Optional Review Notes</label>
+            <textarea value={submissionNote} onChange={e => setSubmissionNote(e.target.value)} placeholder="Message instructions for client review..." rows={3} style={{ width: '100%', padding: '12px 14px', border: '1px solid #d1d5db', borderRadius: '10px', fontSize: '14px', marginTop: '4px', marginBottom: '20px', boxSizing: 'border-box', resize: 'vertical', background: '#f9fafb', color: '#111827', outline: 'none', fontFamily: 'sans-serif' }} />
             
             <div style={{ display: 'flex', gap: '10px' }}>
-              <button onClick={() => setSubmitFor(null)} style={{ flex: 1, padding: '12px', background: '#f0f0f0', border: 'none', borderRadius: '10px', cursor: 'pointer', fontWeight: 600, color: '#111', fontSize: '14px' }}>Cancel</button>
-              <button onClick={handleSubmitWork} style={{ flex: 1, padding: '12px', background: '#1D9E75', color: 'white', border: 'none', borderRadius: '10px', cursor: 'pointer', fontWeight: 600, fontSize: '14px' }}>Submit</button>
+              <button onClick={() => setSubmitFor(null)} style={{ flex: 1, padding: '12px', background: '#f3f4f6', border: 'none', borderRadius: '10px', cursor: 'pointer', fontWeight: 600, color: '#4b5563', fontSize: '14px' }}>Cancel</button>
+              <button onClick={handleSubmitWork} style={{ flex: 1, padding: '12px', background: '#1D9E75', color: 'white', border: 'none', borderRadius: '10px', cursor: 'pointer', fontWeight: 600, fontSize: '14px' }}>Submit Verification</button>
             </div>
           </div>
         </div>
       )}
+
+      {/* Dynamic Glow, Brand Logo Interactions, and Hover Underline Global Injector */}
+      <style jsx global>{`
+        /* Dynamic Brand Click Active Glow Effect Configuration Module */
+        .brand-logo-container:active .logo-box {
+          transform: scale(0.95);
+          box-shadow: 0 0 20px rgba(29, 158, 117, 0.9), 0 0 30px rgba(29, 158, 117, 0.5);
+          background: #111827 !important;
+        }
+        .brand-logo-container:active .brand-text {
+          color: #1D9E75 !important;
+          text-shadow: 0 0 15px rgba(29, 158, 117, 0.6);
+        }
+        .brand-logo-container:hover .brand-text {
+          color: #1D9E75;
+        }
+
+        /* Navbar Menu Items Transitions Setup */
+        .nav-item {
+          transition: all 0.25s ease;
+          position: relative;
+        }
+        .nav-text {
+          color: #4b5563;
+          font-size: 14px;
+          font-weight: 600;
+          cursor: pointer;
+          transition: all 0.25s ease;
+        }
+        
+        /* Interactive Hover Action: Text Shadow Glow & Bottom Underline Trigger Node */
+        .nav-item:hover .nav-text {
+          color: #1D9E75 !important;
+          text-shadow: 0 0 10px rgba(29, 158, 117, 0.4);
+        }
+        .nav-item:hover::after {
+          content: '';
+          position: absolute;
+          bottom: 0;
+          left: 0;
+          right: 0;
+          height: 2px;
+          background: rgba(29, 158, 117, 0.6);
+          border-radius: 2px;
+          box-shadow: 0 0 8px rgba(29, 158, 117, 0.5);
+        }
+        
+        .active-link .nav-text {
+          color: #111827 !important;
+        }
+        
+        @media (max-width: 768px) {
+          .desktop-nav-menu { display: none !important; }
+          .mobile-menu-burger-icon { display: block !important; }
+        }
+      `}</style>
 
       <Footer />
     </div>
