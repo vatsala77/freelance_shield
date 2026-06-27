@@ -3,7 +3,7 @@ import { useState, useEffect } from 'react'
 import Link from 'next/link'
 import { signOut, useSession } from 'next-auth/react'
 import { useRouter } from 'next/navigation'
-
+import Footer from '../components/Footer' 
 export default function Dashboard() {
   const router = useRouter()
   const { data: session, status } = useSession()
@@ -334,6 +334,7 @@ const [submissionNote, setSubmissionNote] = useState('')
         )}
 
       </div>
+      <Footer/>
     </div>
   )
 }

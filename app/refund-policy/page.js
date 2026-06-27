@@ -1,3 +1,4 @@
+import Footer from '../components/Footer' 
 export default function RefundPolicy() {
   return (
     <div style={{ background: '#f5f5f0', minHeight: '100vh', fontFamily: 'sans-serif' }}>
@@ -75,7 +76,7 @@ export default function RefundPolicy() {
         <a href="/terms" style={{ color: '#1D9E75', marginRight: '16px', textDecoration: 'none' }}>Terms & Conditions</a>
         <a href="/" style={{ color: '#888', textDecoration: 'none' }}>Home</a>
       </div>
-
+<Footer/>
     </div>
   )
 }

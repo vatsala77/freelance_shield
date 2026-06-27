@@ -1,5 +1,5 @@
  // Added correct relative path
-
+import Footer from '../components/Footer' 
 export default function Terms() {
   return (
     <div style={{ background: '#f5f5f0', minHeight: '100vh', fontFamily: 'sans-serif' }}>
@@ -76,7 +76,7 @@ export default function Terms() {
 
         </div>
       </div>
-
+<Footer/>
     
     </div>
   )
