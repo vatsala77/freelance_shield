@@ -33,7 +33,9 @@ export default function PayPage() {
   const [submitFor, setSubmitFor] = useState(null)
   const [submissionLink, setSubmissionLink] = useState('')
   const [submissionNote, setSubmissionNote] = useState('')
-
+const [showDispute, setShowDispute] = useState(false)
+const [disputeReason, setDisputeReason] = useState('')
+const [disputeMilestone, setDisputeMilestone] = useState(null)
   const isFreelancer = session?.user?.id === project?.freelancer_id
 
   useEffect(() => {
@@ -148,7 +150,37 @@ export default function PayPage() {
     addActivity(`You approved "${milestone.title}" — ₹${(milestone.amount_paise / 100).toLocaleString('en-IN')} released to freelancer`)
     showToast(`🎉 ₹${(milestone.amount_paise / 100).toLocaleString('en-IN')} released to freelancer!`)
   }
+async function handleDispute() {
+  if (!disputeReason.trim()) {
+    showToast('Please write a reason for the dispute')
+    return
+  }
 
+  const res = await fetch('/api/raise-dispute', {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({
+      milestone_id: disputeMilestone.id,
+      project_id: project.id,
+      reason: disputeReason,
+    })
+  })
+
+  const data = await res.json()
+  if (!res.ok) {
+    showToast('Error: ' + data.error)
+    return
+  }
+
+  setMilestones(prev => prev.map(m =>
+    m.id === disputeMilestone.id ? { ...m, status: 'disputed' } : m
+  ))
+  addActivity(`⚠️ Client raised a dispute: "${disputeReason}"`, '#e74c3c')
+  showToast('Dispute submitted — our team will review within 24 hours')
+  setShowDispute(false)
+  setDisputeReason('')
+  setDisputeMilestone(null)
+}
   async function downloadReceipt() {
     const element = document.getElementById('receipt-content')
 
@@ -248,10 +280,11 @@ export default function PayPage() {
       submitted: { label: 'Work submitted', color: '#f59e0b', bg: '#fff8e1' },
       changes_requested: { label: 'Changes requested', color: '#e74c3c', bg: '#fdeeee' },
       released: { label: 'Released', color: '#1D9E75', bg: '#e8f5ef' },
+      disputed: { label: 'Disputed', color: '#e74c3c', bg: '#fdeeee' },
     }
     const s = map[status] || map.pending
     return (
-      <span style={{ background: s.bg, color: s.color, padding: '3px 10px', borderRadius: '20px', fontSize: '12px', fontWeight: 500 }}>
+      <span style={{ background: s.bg, color: s.color, padding: '3px 10px', borderRadius: '20px', disputed: '33%',fontSize: '12px', fontWeight: 500 }}>
         {s.label}
       </span>
     )
@@ -350,6 +383,11 @@ export default function PayPage() {
                     {m.due_date && `📅 Due ${new Date(m.due_date).toLocaleDateString('en-IN', { day: 'numeric', month: 'short', year: 'numeric' })} · `}
                     <strong style={{ color: '#111' }}>₹{(m.amount_paise / 100).toLocaleString('en-IN')}</strong>
                   </p>
+                  {isFreelancer && m.freelancer_payout_paise && (
+  <p style={{ margin: '4px 0 0', color: '#1D9E75', fontSize: '12px', fontWeight: 500 }}>
+    You'll receive ₹{(m.freelancer_payout_paise / 100).toLocaleString('en-IN')} (after 5% platform fee)
+  </p>
+)}
                   {m.status === 'changes_requested' && m.change_request_note && (
                     <p style={{ margin: '8px 0 0', color: '#e74c3c', fontSize: '13px', background: '#fdeeee', padding: '8px 12px', borderRadius: '6px' }}>
                       💬 {m.change_request_note}
@@ -373,16 +411,23 @@ export default function PayPage() {
                   )
                 )}
 
-                {m.status === 'funded' && (
-                  isFreelancer ? (
-                    <button onClick={() => setSubmitFor(m.id)}
-                      style={{ background: '#111', color: 'white', border: 'none', padding: '10px 20px', borderRadius: '8px', cursor: 'pointer', fontWeight: 600, fontSize: '14px' }}>
-                      Submit Work
-                    </button>
-                  ) : (
-                    <span style={{ color: '#1D9E75', fontSize: '13px', fontWeight: 500 }}>⏳ Awaiting submission</span>
-                  )
-                )}
+              {m.status === 'funded' && (
+  isFreelancer ? (
+    <button onClick={() => setSubmitFor(m.id)}
+      style={{ background: '#111', color: 'white', border: 'none', padding: '10px 20px', borderRadius: '8px', cursor: 'pointer', fontWeight: 600, fontSize: '14px' }}>
+      Submit Work
+    </button>
+  ) : (
+    <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'flex-end', gap: '6px' }}>
+      <span style={{ color: '#1D9E75', fontSize: '13px', fontWeight: 500 }}>⏳ Awaiting submission</span>
+      <span
+        onClick={() => { setDisputeMilestone(m); setShowDispute(true) }}
+        style={{ color: '#e74c3c', fontSize: '12px', cursor: 'pointer', textDecoration: 'underline' }}>
+        ⚠️ Raise a dispute
+      </span>
+    </div>
+  )
+)}
 
                 {m.status === 'submitted' && !isFreelancer && (
                   <div style={{ display: 'flex', gap: '8px' }}>
@@ -695,7 +740,57 @@ export default function PayPage() {
           </div>
         </div>
       )}
+{showDispute && (
+  <div style={{ position: 'fixed', inset: 0, background: 'rgba(0,0,0,0.5)', zIndex: 1000, display: 'flex', alignItems: 'center', justifyContent: 'center' }}
+    onClick={() => setShowDispute(false)}>
+    <div style={{ background: 'white', borderRadius: '16px', width: '420px', padding: '28px' }}
+      onClick={e => e.stopPropagation()}>
 
+      <div style={{ display: 'flex', alignItems: 'center', gap: '10px', marginBottom: '8px' }}>
+        <span style={{ background: '#fdeeee', color: '#e74c3c', width: '32px', height: '32px', borderRadius: '50%', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '16px' }}>⚠️</span>
+        <h3 style={{ margin: 0, color: '#111', fontSize: '18px' }}>Raise a Dispute</h3>
+      </div>
+      <p style={{ margin: '0 0 8px', color: '#888', fontSize: '13px' }}>
+        Milestone: <strong style={{ color: '#111' }}>{disputeMilestone?.title}</strong>
+      </p>
+      <p style={{ margin: '0 0 16px', color: '#888', fontSize: '13px' }}>
+        After raising a dispute, our team will review the case and process the refund. Please note that this action is irreversible.
+      </p>
+
+      <label style={{ fontSize: '13px', color: '#555', fontWeight: 500 }}>Reason *</label>
+      <textarea
+        value={disputeReason}
+        onChange={e => setDisputeReason(e.target.value)}
+        placeholder="e.g. Freelancer has not responded for more than 7 days..."
+        rows={4}
+        style={{ width: '100%', padding: '12px', border: '1px solid #ddd', borderRadius: '10px', fontSize: '14px', marginTop: '4px', marginBottom: '20px', boxSizing: 'border-box', resize: 'vertical', background: '#f9f9f9', color: '#111', outline: 'none', fontFamily: 'sans-serif' }}
+      />
+
+      <div style={{ background: '#fff8e1', border: '1px solid #f59e0b', borderRadius: '8px', padding: '12px', marginBottom: '20px' }}>
+        <p style={{ margin: 0, fontSize: '12px', color: '#b45309' }}>
+          ⏱️ The refund process may take 5-7 business days. The amount will be transferred directly to your bank account from the Razorpay escrow.
+        </p>
+      </div>
+
+      <div style={{ display: 'flex', gap: '10px' }}>
+        <button onClick={() => { setShowDispute(false); setDisputeReason('') }}
+          style={{ flex: 1, padding: '12px', background: '#f0f0f0', border: 'none', borderRadius: '10px', cursor: 'pointer', fontWeight: 600, color: '#111', fontSize: '14px' }}>
+          Cancel
+        </button>
+        <button onClick={handleDispute}
+          style={{ flex: 1, padding: '12px', background: '#e74c3c', color: 'white', border: 'none', borderRadius: '10px', cursor: 'pointer', fontWeight: 600, fontSize: '14px' }}>
+          Submit Dispute
+        </button>
+      </div>
+    </div>
+
+  </div>
+)}
+{/* Footer */}
+<div style={{ textAlign: 'center', padding: '32px 20px', color: '#888', fontSize: '12px' }}>
+  <a href="/terms" style={{ color: '#888', marginRight: '16px', textDecoration: 'none' }}>Terms & Conditions</a>
+  <a href="/refund-policy" style={{ color: '#888', textDecoration: 'none' }}>Refund Policy</a>
+</div>
     </div>
   )
 }

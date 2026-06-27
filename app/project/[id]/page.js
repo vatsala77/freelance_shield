@@ -195,15 +195,22 @@ export default function ProjectManage() {
                 </div>
               ) : (
                 <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start' }}>
-                  <div>
-                    <div style={{ display: 'flex', alignItems: 'center', gap: '8px', marginBottom: '4px' }}>
-                      <span style={{ fontWeight: 500, color: '#111', fontSize: '15px' }}>{m.title}</span>
-                      <span style={{ background: statusInfo.bg, color: statusInfo.color, padding: '2px 10px', borderRadius: '20px', fontSize: '11px', fontWeight: 500 }}>
-                        {statusInfo.locked ? '🔒 ' : ''}{statusInfo.label}
-                      </span>
-                    </div>
-                    <p style={{ margin: 0, color: '#888', fontSize: '13px' }}>₹{(m.amount_paise / 100).toLocaleString('en-IN')}</p>
-                  </div>
+                 <div>
+  <div style={{ display: 'flex', alignItems: 'center', gap: '8px', marginBottom: '4px' }}>
+    <span style={{ fontWeight: 500, color: '#111', fontSize: '15px' }}>{m.title}</span>
+    <span style={{ background: statusInfo.bg, color: statusInfo.color, padding: '2px 10px', borderRadius: '20px', fontSize: '11px', fontWeight: 500 }}>
+      {statusInfo.locked ? '🔒 ' : ''}{statusInfo.label}
+    </span>
+  </div>
+  <p style={{ margin: '0 0 4px', color: '#888', fontSize: '13px' }}>
+    Client pays ₹{(m.amount_paise / 100).toLocaleString('en-IN')}
+  </p>
+  {m.freelancer_payout_paise && (
+    <p style={{ margin: 0, color: '#1D9E75', fontSize: '12px', fontWeight: 500 }}>
+      You receive ₹{(m.freelancer_payout_paise / 100).toLocaleString('en-IN')} (after 5% platform fee)
+    </p>
+  )}
+</div>
                   {!statusInfo.locked && (
                     <button onClick={() => startEdit(m)}
                       style={{ background: 'white', border: '1px solid #e5e5e5', color: '#111', padding: '6px 14px', borderRadius: '8px', cursor: 'pointer', fontSize: '13px', fontWeight: 500 }}>

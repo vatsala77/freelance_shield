@@ -244,20 +244,29 @@ const [submissionNote, setSubmissionNote] = useState('')
                   <span style={{ fontWeight: 600, color: '#111', fontSize: '16px', whiteSpace: 'nowrap' }}>
                     ₹{(p.total_amount_paise / 100).toLocaleString('en-IN')}
                   </span>
-                  <Link href={`/pay/${p.invite_token}`}>
-                    <button style={{
-                      background: 'white', border: '1px solid #e5e5e5', color: '#111',
-                      padding: '6px 16px', borderRadius: '8px', cursor: 'pointer',
-                      fontSize: '13px', fontWeight: 500, whiteSpace: 'nowrap'
-                    }}>
-                      View ↗
-                    </button>
-                  </Link>
+                  <Link href={`/project/${p.id}`}>
+  <button style={{
+    background: '#1D9E75', border: 'none', color: 'white',
+    padding: '6px 16px', borderRadius: '8px', cursor: 'pointer',
+    fontSize: '13px', fontWeight: 500, whiteSpace: 'nowrap', marginRight: '8px'
+  }}>
+    Manage
+  </button>
+</Link>
+<Link href={`/pay/${p.invite_token}`}>
+  <button style={{
+    background: 'white', border: '1px solid #e5e5e5', color: '#111',
+    padding: '6px 16px', borderRadius: '8px', cursor: 'pointer',
+    fontSize: '13px', fontWeight: 500, whiteSpace: 'nowrap'
+  }}>
+    View ↗
+  </button>
+</Link>
                 </div>
               </div>
 {p.milestones?.some(m => m.status === 'changes_requested') && (
   <div style={{ background: '#fdeeee', color: '#e74c3c', padding: '8px 12px', borderRadius: '8px', fontSize: '13px', marginBottom: '10px', display: 'flex', alignItems: 'center', gap: '6px' }}>
-    🔄 Client ne changes request ki hai — <Link href={`/pay/${p.invite_token}`} style={{ color: '#e74c3c', fontWeight: 600, textDecoration: 'underline' }}>review karo</Link>
+    🔄 Client ne changes request ki hai — <Link href={`/pay/${p.invite_token}`} style={{ color: '#e74c3c', fontWeight: 600, textDecoration: 'underline' }}>review </Link>
   </div>
 )}
 {p.milestones?.map(m => (

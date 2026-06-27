@@ -2,6 +2,7 @@
 import Link from 'next/link'
 import { useSession } from 'next-auth/react'
 
+
 export default function Home() {
   const { status } = useSession()
   const isLoggedIn = status === 'authenticated'
@@ -119,6 +120,8 @@ export default function Home() {
         </div>
       </section>
 
+      {/* Footer component added here */}
+  
     </div>
   )
 }

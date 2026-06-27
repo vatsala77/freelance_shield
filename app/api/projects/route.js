@@ -91,16 +91,23 @@ export async function POST(req) {
       return NextResponse.json({ error: projectError.message }, { status: 500 })
     }
 
-    const milestoneRows = milestones.map((m, index) => ({
-      project_id: project.id,
-      position: index + 1,
-      title: m.title,
-      description: m.description || null,
-      amount_paise: Number(m.amount) * 100,
-      due_date: m.due || null,
-      status: 'pending',
-    }))
+    const milestoneRows = milestones.map((m, index) => {
+  const amountPaise = Number(m.amount) * 100
+  const feePaise = Math.round(amountPaise * 0.05)
+  const payoutPaise = amountPaise - feePaise
 
+  return {
+    project_id: project.id,
+    position: index + 1,
+    title: m.title,
+    description: m.description || null,
+    amount_paise: amountPaise,
+    platform_fee_paise: feePaise,
+    freelancer_payout_paise: payoutPaise,
+    due_date: m.due || null,
+    status: 'pending',
+  }
+})
     const { error: milestoneError } = await supabaseAdmin
       .from('milestones')
       .insert(milestoneRows)

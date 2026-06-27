@@ -22,17 +22,23 @@ export async function POST(req) {
 
     const nextPosition = (existingMilestones?.[0]?.position || 0) + 1
 
-    const { error } = await supabaseAdmin
-      .from('milestones')
-      .insert({
-        project_id,
-        position: nextPosition,
-        title,
-        description: description || null,
-        amount_paise: Math.round(Number(amount) * 100),
-        due_date: due_date || null,
-        status: 'pending',
-      })
+    const amountPaise = Math.round(Number(amount) * 100)
+const feePaise = Math.round(amountPaise * 0.05)
+const payoutPaise = amountPaise - feePaise
+
+const { error } = await supabaseAdmin
+  .from('milestones')
+  .insert({
+    project_id,
+    position: nextPosition,
+    title,
+    description: description || null,
+    amount_paise: amountPaise,
+    platform_fee_paise: feePaise,
+    freelancer_payout_paise: payoutPaise,
+    due_date: due_date || null,
+    status: 'pending',
+  })
 
     if (error) {
       console.error('Add milestone error:', error)
