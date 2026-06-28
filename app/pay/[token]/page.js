@@ -52,18 +52,40 @@ export default function PayPage() {
         const actRes = await fetch(`/api/activity?project_id=${data.project.id}`)
         const actData = await actRes.json()
 
-        if (actData.length > 0) {
-          setActivity(actData.map(a => ({
-            id: a.id,
-            text: a.text,
-            color: a.color,
-            time: new Date(a.created_at).toLocaleString('en-IN', { hour: 'numeric', minute: 'numeric', hour12: true })
-          })))
-        } else {
-          setActivity([
-            { id: 1, text: `Project created by freelancer`, time: 'Earlier', color: '#888' },
-          ])
-        }
+       if (actData.length > 0) {
+  setActivity(
+    actData.map(a => {
+      const activityDate = new Date(a.created_at + 'Z')
+
+      return {
+        id: a.id,
+        text: a.text,
+        color: a.color,
+        time:
+          activityDate.toLocaleString('en-IN', {
+            hour: 'numeric',
+            minute: 'numeric',
+            hour12: true,
+            timeZone: 'Asia/Kolkata',
+          }) +
+          ` · ${activityDate.toLocaleDateString('en-IN', {
+            day: 'numeric',
+            month: 'short',
+            timeZone: 'Asia/Kolkata',
+          })}`,
+      }
+    })
+  )
+} else {
+  setActivity([
+    {
+      id: 1,
+      text: 'Project created by freelancer',
+      time: 'Earlier',
+      color: '#888',
+    },
+  ])
+}
         setLoading(false)
       })
       .catch(() => { setError('Failed to load project'); setLoading(false) })
@@ -75,14 +97,43 @@ export default function PayPage() {
   }
 
   async function addActivity(text, color = '#1D9E75') {
-    await fetch('/api/activity', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ project_id: project.id, text, color }),
-    })
-    setActivity(prev => [{ id: Date.now(), text, time: 'Just now', color }, ...prev])
-  }
+  await fetch('/api/activity', {
+    method: 'POST',
+    headers: {
+      'Content-Type': 'application/json',
+    },
+    body: JSON.stringify({
+      project_id: project.id,
+      text,
+      color,
+    }),
+  })
 
+  const now = new Date()
+
+  const formattedTime =
+    now.toLocaleString('en-IN', {
+      hour: 'numeric',
+      minute: 'numeric',
+      hour12: true,
+      timeZone: 'Asia/Kolkata',
+    }) +
+    ` · ${now.toLocaleDateString('en-IN', {
+      day: 'numeric',
+      month: 'short',
+      timeZone: 'Asia/Kolkata',
+    })}`
+
+  setActivity(prev => [
+    {
+      id: Date.now(),
+      text,
+      time: formattedTime,
+      color,
+    },
+    ...prev,
+  ])
+}
   const inEscrow = milestones.filter(m => ['funded', 'submitted', 'changes_requested'].includes(m.status)).reduce((a, m) => a + (m.amount_paise / 100), 0)
   const released = milestones.filter(m => m.status === 'released').reduce((a, m) => a + (m.amount_paise / 100), 0)
   const releasedCount = milestones.filter(m => m.status === 'released').length
@@ -658,13 +709,13 @@ export default function PayPage() {
               <span style={{ background: '#e8f5ef', color: '#1D9E75', width: '32px', height: '32px', borderRadius: '50%', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '16px' }}>📤</span>
               <h3 style={{ margin: 0, color: '#111', fontSize: '18px' }}>Submit work</h3>
             </div>
-            <p style={{ margin: '0 0 16px', color: '#888', fontSize: '13px' }}>Apna kaam ka link share karo (Drive, GitHub, Figma, etc).</p>
+            <p style={{ margin: '0 0 16px', color: '#888', fontSize: '13px' }}> Share the link of your work (Drive, GitHub, Figma, etc).</p>
             
             <label style={{ fontSize: '13px', color: '#555', fontWeight: 500 }}>Submission link *</label>
             <input value={submissionLink} onChange={e => setSubmissionLink(e.target.value)} placeholder="https://drive.google.com/..." style={modalInputStyle} />
 
             <label style={{ fontSize: '13px', color: '#555', fontWeight: 500, display: 'block', marginTop: '14px' }}>Note (optional)</label>
-            <textarea value={submissionNote} onChange={e => setSubmissionNote(e.target.value)} placeholder="Kuch bhi bolna ho client ko..." rows={3} style={textareaStyle} />
+            <textarea value={submissionNote} onChange={e => setSubmissionNote(e.target.value)} placeholder=" Anything you want to say to the client..." rows={3} style={textareaStyle} />
             
             <div style={{ display: 'flex', gap: '10px', marginTop: '4px' }}>
               <button onClick={() => setSubmitFor(null)} style={cancelModalBtnStyle}>Cancel</button>
