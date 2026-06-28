@@ -3,7 +3,7 @@ import { useState, useEffect } from 'react'
 import { useParams, useRouter } from 'next/navigation'
 import { useSession } from 'next-auth/react'
 import Link from 'next/link'
-
+import Image from 'next/image'
 export default function ProjectManage() {
   const { id } = useParams()
   const router = useRouter()
@@ -189,12 +189,32 @@ export default function ProjectManage() {
         }}>
           <Link href="/" style={{ textDecoration: 'none' }} className="brand-logo-container">
             <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
-              <span className="logo-box" style={{
-                background: '#1D9E75', color: 'white', width: '32px', height: '32px',
-                borderRadius: '8px', display: 'flex', alignItems: 'center',
-                justifyContent: 'center', fontWeight: 700, fontSize: '15px',
-                transition: 'all 0.2s ease'
-              }}>F</span>
+             <div
+  className="logo-box"
+  style={{
+    width: '36px',
+    height: '36px',
+    borderRadius: '8px',
+    overflow: 'hidden',
+    display: 'flex',
+    alignItems: 'center',
+    justifyContent: 'center',
+    transition: 'all 0.2s ease'
+  }}
+>
+  <Image
+    src="/logo.png"
+    alt="FreelanceShield Logo"
+    width={36}
+    height={36}
+    priority
+    style={{
+      width: '100%',
+      height: '100%',
+      objectFit: 'contain'
+    }}
+  />
+</div>
               <span className="brand-text nav-brand-text" style={{ 
                 fontWeight: 700, color: '#111827', fontSize: '18px', 
                 letterSpacing: '-0.02em', transition: 'all 0.2s ease' 

@@ -37,8 +37,10 @@ export default function PayPage() {
   const [showDispute, setShowDispute] = useState(false)
   const [disputeReason, setDisputeReason] = useState('')
   const [disputeMilestone, setDisputeMilestone] = useState(null)
-  
-  const isFreelancer = session?.user?.id === project?.freelancer_id
+  const [simulateClientView, setSimulateClientView] = useState(false)
+
+  const isActualFreelancer = session?.user?.id === project?.freelancer_id
+  const isFreelancer = isActualFreelancer && !simulateClientView
 
   useEffect(() => {
     if (!token) return
@@ -52,40 +54,40 @@ export default function PayPage() {
         const actRes = await fetch(`/api/activity?project_id=${data.project.id}`)
         const actData = await actRes.json()
 
-       if (actData.length > 0) {
-  setActivity(
-    actData.map(a => {
-      const activityDate = new Date(a.created_at + 'Z')
+        if (actData.length > 0) {
+          setActivity(
+            actData.map(a => {
+              const activityDate = new Date(a.created_at + 'Z')
 
-      return {
-        id: a.id,
-        text: a.text,
-        color: a.color,
-        time:
-          activityDate.toLocaleString('en-IN', {
-            hour: 'numeric',
-            minute: 'numeric',
-            hour12: true,
-            timeZone: 'Asia/Kolkata',
-          }) +
-          ` · ${activityDate.toLocaleDateString('en-IN', {
-            day: 'numeric',
-            month: 'short',
-            timeZone: 'Asia/Kolkata',
-          })}`,
-      }
-    })
-  )
-} else {
-  setActivity([
-    {
-      id: 1,
-      text: 'Project created by freelancer',
-      time: 'Earlier',
-      color: '#888',
-    },
-  ])
-}
+              return {
+                id: a.id,
+                text: a.text,
+                color: a.color,
+                time:
+                  activityDate.toLocaleString('en-IN', {
+                    hour: 'numeric',
+                    minute: 'numeric',
+                    hour12: true,
+                    timeZone: 'Asia/Kolkata',
+                  }) +
+                  ` · ${activityDate.toLocaleDateString('en-IN', {
+                    day: 'numeric',
+                    month: 'short',
+                    timeZone: 'Asia/Kolkata',
+                  })}`,
+              }
+            })
+          )
+        } else {
+          setActivity([
+            {
+              id: 1,
+              text: 'Project created by freelancer',
+              time: 'Earlier',
+              color: '#888',
+            },
+          ])
+        }
         setLoading(false)
       })
       .catch(() => { setError('Failed to load project'); setLoading(false) })
@@ -97,43 +99,44 @@ export default function PayPage() {
   }
 
   async function addActivity(text, color = '#1D9E75') {
-  await fetch('/api/activity', {
-    method: 'POST',
-    headers: {
-      'Content-Type': 'application/json',
-    },
-    body: JSON.stringify({
-      project_id: project.id,
-      text,
-      color,
-    }),
-  })
+    await fetch('/api/activity', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify({
+        project_id: project.id,
+        text,
+        color,
+      }),
+    })
 
-  const now = new Date()
+    const now = new Date()
 
-  const formattedTime =
-    now.toLocaleString('en-IN', {
-      hour: 'numeric',
-      minute: 'numeric',
-      hour12: true,
-      timeZone: 'Asia/Kolkata',
-    }) +
-    ` · ${now.toLocaleDateString('en-IN', {
-      day: 'numeric',
-      month: 'short',
-      timeZone: 'Asia/Kolkata',
-    })}`
+    const formattedTime =
+      now.toLocaleString('en-IN', {
+        hour: 'numeric',
+        minute: 'numeric',
+        hour12: true,
+        timeZone: 'Asia/Kolkata',
+      }) +
+      ` · ${now.toLocaleDateString('en-IN', {
+        day: 'numeric',
+        month: 'short',
+        timeZone: 'Asia/Kolkata',
+      })}`
 
-  setActivity(prev => [
-    {
-      id: Date.now(),
-      text,
-      time: formattedTime,
-      color,
-    },
-    ...prev,
-  ])
-}
+    setActivity(prev => [
+      {
+        id: Date.now(),
+        text,
+        time: formattedTime,
+        color,
+      },
+      ...prev,
+    ])
+  }
+
   const inEscrow = milestones.filter(m => ['funded', 'submitted', 'changes_requested'].includes(m.status)).reduce((a, m) => a + (m.amount_paise / 100), 0)
   const released = milestones.filter(m => m.status === 'released').reduce((a, m) => a + (m.amount_paise / 100), 0)
   const releasedCount = milestones.filter(m => m.status === 'released').length
@@ -305,10 +308,10 @@ export default function PayPage() {
     const res = await fetch('/api/submit-work', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ 
-        milestone_id: submitFor, 
+      body: JSON.stringify({
+        milestone_id: submitFor,
         submission_link: submissionLink,
-        submission_note: submissionNote 
+        submission_note: submissionNote
       }),
     })
 
@@ -339,7 +342,7 @@ export default function PayPage() {
     }
     const s = map[status] || map.pending
     return (
-      <span style={{ background: s.bg, color: s.color, padding: '3px 10px', borderRadius: '20px', fontSize: '12px', fontWeight: 500 }}>
+      <span style={{ background: s.bg, color: s.color, padding: '3px 10px', borderRadius: '20px', fontSize: 'clamp(11px, 2.5vw, 12px)', fontWeight: 500 }}>
         {s.label}
       </span>
     )
@@ -352,31 +355,30 @@ export default function PayPage() {
 
   if (loading) return (
     <div style={{ background: 'linear-gradient(135deg, #d4f7e6 0%, #a7f3d0 100%)', minHeight: '100vh', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-      <p style={{ color: '#1D9E75', fontFamily: 'sans-serif', fontWeight: 600 }}>Loading project...</p>
+      <p style={{ color: '#1D9E75', fontFamily: 'sans-serif', fontWeight: 600, fontSize: 'clamp(13px, 3vw, 15px)' }}>Loading project...</p>
     </div>
   )
 
   if (error) return (
     <div style={{ background: '#f5f5f0', minHeight: '100vh', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-      <p style={{ color: '#e74c3c', fontWeight: 600 }}>Error: {error}</p>
+      <p style={{ color: '#e74c3c', fontWeight: 600, fontSize: 'clamp(13px, 3vw, 15px)' }}>Error: {error}</p>
     </div>
   )
 
   return (
-    <div style={{ 
-      background: 'linear-gradient(180deg, #d4f7e6 0%, #bbf7d0 50%, #a7f3d0 100%)', 
-      minHeight: '100vh', 
+    <div style={{
+      background: 'linear-gradient(180deg, #d4f7e6 0%, #bbf7d0 50%, #a7f3d0 100%)',
+      minHeight: '100vh',
       fontFamily: '-apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif',
       paddingBottom: '40px'
     }}>
 
       {toast && (
-        <div style={{ position: 'fixed', top: '20px', left: '50%', transform: 'translateX(-50%)', background: '#1D9E75', color: 'white', padding: '12px 24px', borderRadius: '8px', zIndex: 999, fontWeight: 500, fontSize: '14px' }}>
+        <div style={{ position: 'fixed', top: '20px', left: '50%', transform: 'translateX(-50%)', background: '#1D9E75', color: 'white', padding: '12px 24px', borderRadius: '8px', zIndex: 999, fontWeight: 500, fontSize: 'clamp(13px, 3vw, 14px)', maxWidth: '90vw', textAlign: 'center' }}>
           {toast}
         </div>
       )}
 
-      {/* Static Glassmorphism Navbar Layer */}
       <div style={{ padding: '16px 20px', zIndex: 1000 }}>
         <nav style={{
           background: 'rgba(255, 255, 255, 0.7)',
@@ -385,7 +387,9 @@ export default function PayPage() {
           display: 'flex',
           justifyContent: 'space-between',
           alignItems: 'center',
-          padding: '12px 32px',
+          flexWrap: 'wrap',
+          gap: '10px',
+          padding: 'clamp(10px, 2.5vw, 12px) clamp(16px, 4vw, 32px)',
           borderRadius: '16px',
           border: '1px solid rgba(0, 0, 0, 0.08)',
           boxShadow: '0 8px 32px rgba(29, 158, 117, 0.08)',
@@ -397,40 +401,56 @@ export default function PayPage() {
               <span className="logo-box" style={{
                 background: '#1D9E75', color: 'white', width: '32px', height: '32px',
                 borderRadius: '8px', display: 'flex', alignItems: 'center',
-                justifyContent: 'center', fontWeight: 700, fontSize: '15px',
+                justifyContent: 'center', fontWeight: 700, fontSize: 'clamp(13px, 3vw, 15px)',
                 transition: 'all 0.2s ease'
               }}>F</span>
-              <span className="brand-text" style={{ 
-                fontWeight: 700, color: '#111827', fontSize: '18px', 
-                letterSpacing: '-0.02em', transition: 'all 0.2s ease' 
+              <span className="brand-text" style={{
+                fontWeight: 700, color: '#111827', fontSize: 'clamp(15px, 3.5vw, 18px)',
+                letterSpacing: '-0.02em', transition: 'all 0.2s ease'
               }}>FreelanceShield</span>
             </div>
           </Link>
-          
-          <div style={{ display: 'flex', alignItems: 'center', gap: '24px' }}>
+
+          <div style={{ display: 'flex', alignItems: 'center', gap: '16px', flexWrap: 'wrap' }}>
             <Link href="/dashboard" style={{ textDecoration: 'none' }} className="nav-item">
               <span className="nav-text">Dashboard</span>
             </Link>
-            <span style={{ color: '#4b5563', fontSize: '14px', fontWeight: 600 }}>🔒 Secure payment</span>
+            <span style={{ color: '#4b5563', fontSize: 'clamp(12px, 2.8vw, 14px)', fontWeight: 600, whiteSpace: 'nowrap' }}>🔒 Secure payment</span>
+            {isActualFreelancer && (
+              <button
+                onClick={() => setSimulateClientView(prev => !prev)}
+                style={{
+                  border: simulateClientView ? 'none' : '1px dashed #1D9E75',
+                  background: simulateClientView ? '#111827' : 'rgba(29, 158, 117, 0.1)',
+                  color: simulateClientView ? 'white' : '#1D9E75',
+                  padding: '8px 14px',
+                  borderRadius: '8px',
+                  cursor: 'pointer',
+                  fontSize: 'clamp(11px, 2.5vw, 13px)',
+                  fontWeight: 600,
+                  transition: 'all 0.2s',
+                  whiteSpace: 'nowrap'
+                }}
+              >
+                {simulateClientView ? '🔄 Switch back to Freelancer Mode' : '👀 See what your Client sees'}
+              </button>
+            )}
           </div>
         </nav>
       </div>
 
-      {/* Main Layout Area Workspace Split Area */}
       <div style={{ maxWidth: '1000px', margin: '20px auto', padding: '0 20px' }} className="main-split-grid">
-        
-        {/* Left Side Panel View */}
+
         <div style={{ display: 'flex', flexDirection: 'column', gap: '20px' }}>
-          
-          {/* Project Details Core Overview Card */}
+
           <div style={cardStyle}>
-            <p style={{ color: '#1D9E75', fontSize: '12px', fontWeight: 600, margin: '0 0 8px', textTransform: 'uppercase' }}>PAYMENT REQUEST</p>
+            <p style={{ color: '#1D9E75', fontSize: 'clamp(11px, 2.5vw, 12px)', fontWeight: 600, margin: '0 0 8px', textTransform: 'uppercase' }}>PAYMENT REQUEST</p>
             <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', flexWrap: 'wrap', gap: '16px' }}>
-              <div>
-                <h2 style={{ margin: '0 0 8px', fontSize: '24px', color: '#111' }}>{project.title}</h2>
-                <p style={{ margin: 0, color: '#888', fontSize: '14px' }}>For <strong style={{ color: '#111' }}>{project.client_name}</strong> · {project.client_email}</p>
+              <div style={{ minWidth: 0 }}>
+                <h2 style={{ margin: '0 0 8px', fontSize: 'clamp(19px, 4.5vw, 24px)', color: '#111' }}>{project.title}</h2>
+                <p style={{ margin: 0, color: '#888', fontSize: 'clamp(12px, 2.8vw, 14px)' }}>For <strong style={{ color: '#111' }}>{project.client_name}</strong> · {project.client_email}</p>
               </div>
-              
+
               <div style={{ display: 'flex', gap: '8px', flexWrap: 'wrap' }}>
                 {isFreelancer && (
                   <button
@@ -438,89 +458,85 @@ export default function PayPage() {
                       const message = `Hi ${project.client_name}! Here's your secure payment link for "${project.title}": ${window.location.href}`
                       window.open(`https://wa.me/?text=${encodeURIComponent(message)}`, '_blank')
                     }}
-                    style={{ background: '#25D366', border: 'none', color: 'white', padding: '8px 16px', borderRadius: '8px', cursor: 'pointer', fontSize: '13px', fontWeight: 500, display: 'flex', alignItems: 'center', gap: '6px' }}>
+                    style={{ background: '#25D366', border: 'none', color: 'white', padding: '8px 16px', borderRadius: '8px', cursor: 'pointer', fontSize: 'clamp(12px, 2.8vw, 13px)', fontWeight: 500, display: 'flex', alignItems: 'center', gap: '6px' }}>
                     📱 Share on WhatsApp
                   </button>
                 )}
                 <button onClick={() => setShowReceipt(true)}
-                  style={{ background: 'white', border: '1px solid rgba(0, 0, 0, 0.08)', color: '#111', padding: '8px 16px', borderRadius: '8px', cursor: 'pointer', fontSize: '13px' }}>
+                  style={{ background: 'white', border: '1px solid rgba(0, 0, 0, 0.08)', color: '#111', padding: '8px 16px', borderRadius: '8px', cursor: 'pointer', fontSize: 'clamp(12px, 2.8vw, 13px)' }}>
                   ⬇ Download receipt
                 </button>
               </div>
             </div>
 
-            {/* Parameter Metric Blocks */}
-            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(180px, 1fr))', gap: '12px', marginTop: '20px' }}>
+            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(140px, 1fr))', gap: '12px', marginTop: '20px' }}>
               {[
                 { label: 'TOTAL', val: `₹${(project.total_amount_paise / 100).toLocaleString('en-IN')}`, color: '#111' },
                 { label: 'IN ESCROW', val: `₹${inEscrow.toLocaleString('en-IN')}`, color: '#1D9E75' },
                 { label: 'RELEASED', val: `₹${released.toLocaleString('en-IN')} · ${releasedCount}/${milestones.length}`, color: '#111' },
               ].map(s => (
-                <div key={s.label} style={{ background: 'rgba(255, 255, 255, 0.4)', borderRadius: '10px', padding: '16px', border: '1px solid rgba(0, 0, 0, 0.05)' }}>
-                  <p style={{ margin: '0 0 4px', fontSize: '11px', color: '#888', fontWeight: 600 }}>{s.label}</p>
-                  <p style={{ margin: 0, fontSize: '20px', fontWeight: 700, color: s.color }}>{s.val}</p>
+                <div key={s.label} style={{ background: 'rgba(255, 255, 255, 0.4)', borderRadius: '10px', padding: 'clamp(12px, 3vw, 16px)', border: '1px solid rgba(0, 0, 0, 0.05)' }}>
+                  <p style={{ margin: '0 0 4px', fontSize: 'clamp(10px, 2.2vw, 11px)', color: '#888', fontWeight: 600 }}>{s.label}</p>
+                  <p style={{ margin: 0, fontSize: 'clamp(15px, 3.8vw, 20px)', fontWeight: 700, color: s.color }}>{s.val}</p>
                 </div>
               ))}
             </div>
           </div>
 
-          {/* DYNAMIC TRUST BANNER FOR HIGHLIGHTING BETA NOTE */}
-          <div style={{ 
-            background: '#fef2f2', 
-            borderRadius: '12px', 
-            padding: '16px 20px', 
-            textAlign: 'center', 
+          <div style={{
+            background: '#fef2f2',
+            borderRadius: '12px',
+            padding: '16px 20px',
+            textAlign: 'center',
             border: '1px solid #fca5a5',
             marginTop: '4px',
             boxShadow: '0 2px 8px rgba(239, 68, 68, 0.04)'
           }}>
-            <p style={{ margin: 0, fontSize: '13px', color: '#991b1b', lineHeight: 1.6, fontWeight: 500 }}>
-              FreelanceShield charges <strong style={{ color: '#1D9E75', fontWeight: 700 }}>zero platform fee</strong> during beta. Only Razorpay's standard gateway charges apply — which are completely outside our control. 
+            <p style={{ margin: 0, fontSize: 'clamp(12px, 2.8vw, 13px)', color: '#991b1b', lineHeight: 1.6, fontWeight: 500 }}>
+              FreelanceShield charges <strong style={{ color: '#1D9E75', fontWeight: 700 }}>zero platform fee</strong> during beta. Only Razorpay's standard gateway charges apply — which are completely outside our control.
             </p>
           </div>
 
-          <h3 style={{ margin: '12px 0 4px', fontSize: '13px', fontWeight: 600, color: '#888', textTransform: 'uppercase' }}>MILESTONES</h3>
+          <h3 style={{ margin: '12px 0 4px', fontSize: 'clamp(12px, 2.8vw, 13px)', fontWeight: 600, color: '#888', textTransform: 'uppercase' }}>MILESTONES</h3>
 
-          {/* Milestone Loop Matrix */}
           {milestones.map((m, index) => (
-            <div key={m.id} style={{ 
-              background: 'rgba(255, 255, 255, 0.6)', 
+            <div key={m.id} style={{
+              background: 'rgba(255, 255, 255, 0.6)',
               backdropFilter: 'blur(10px)',
-              border: `1px solid ${m.status === 'submitted' ? '#f59e0b' : m.status === 'changes_requested' ? '#e74c3c' : m.status === 'released' ? '#1D9E75' : 'rgba(0, 0, 0, 0.08)'}`, 
-              borderRadius: '16px', 
-              padding: '24px' 
+              border: `1px solid ${m.status === 'submitted' ? '#f59e0b' : m.status === 'changes_requested' ? '#e74c3c' : m.status === 'released' ? '#1D9E75' : 'rgba(0, 0, 0, 0.08)'}`,
+              borderRadius: '16px',
+              padding: 'clamp(16px, 4vw, 24px)'
             }}>
               <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', flexWrap: 'wrap', gap: '16px', marginBottom: '12px' }}>
-                <div>
+                <div style={{ minWidth: 0 }}>
                   <div style={{ display: 'flex', alignItems: 'center', gap: '10px', marginBottom: '6px', flexWrap: 'wrap' }}>
-                    <span style={{ background: 'rgba(0,0,0,0.06)', width: '24px', height: '24px', borderRadius: '50%', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '12px', fontWeight: 600, color: '#111' }}>{m.position}</span>
-                    <span style={{ fontWeight: 500, color: '#111' }}>{m.title}</span>
+                    <span style={{ background: 'rgba(0,0,0,0.06)', width: '24px', height: '24px', borderRadius: '50%', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 'clamp(11px, 2.5vw, 12px)', fontWeight: 600, color: '#111' }}>{m.position}</span>
+                    <span style={{ fontWeight: 500, color: '#111', fontSize: 'clamp(13px, 3vw, 14px)' }}>{m.title}</span>
                     {getStatusBadge(m.status)}
                   </div>
-                  <p style={{ margin: 0, color: '#888', fontSize: '13px' }}>
+                  <p style={{ margin: 0, color: '#888', fontSize: 'clamp(12px, 2.8vw, 13px)' }}>
                     {m.due_date && `📅 Due ${new Date(m.due_date).toLocaleDateString('en-IN', { day: 'numeric', month: 'short', year: 'numeric' })} · `}
                     <strong style={{ color: '#111' }}>₹{(m.amount_paise / 100).toLocaleString('en-IN')}</strong>
                   </p>
                   {m.status === 'changes_requested' && m.change_request_note && (
-                    <p style={{ margin: '8px 0 0', color: '#e74c3c', fontSize: '13px', background: '#fdeeee', padding: '8px 12px', borderRadius: '6px' }}>
+                    <p style={{ margin: '8px 0 0', color: '#e74c3c', fontSize: 'clamp(12px, 2.8vw, 13px)', background: '#fdeeee', padding: '8px 12px', borderRadius: '6px' }}>
                       💬 {m.change_request_note}
                     </p>
                   )}
                   {m.status === 'submitted' && m.submission_link && (
-                    <p style={{ margin: '8px 0 0', fontSize: '13px' }}>
+                    <p style={{ margin: '8px 0 0', fontSize: 'clamp(12px, 2.8vw, 13px)', wordBreak: 'break-all' }}>
                       🔗 <a href={m.submission_link} target="_blank" rel="noopener noreferrer" style={{ color: '#1D9E75' }}>{m.submission_link}</a>
                     </p>
                   )}
                 </div>
 
-                {/* State Trigger Action Arrays */}
                 <div className="action-button-slot">
                   {m.status === 'pending' && (index === 0 || milestones[index - 1].status === 'released') && (
                     isFreelancer ? (
-                      <span style={{ color: '#888', fontSize: '13px' }}>⏳ Awaiting client payment</span>
+                      <span style={{ color: '#888', fontSize: 'clamp(12px, 2.8vw, 13px)' }}>⏳ Awaiting client payment</span>
                     ) : (
                       <button onClick={() => handlePay(m)} disabled={paying}
-                        style={{ background: '#111', color: 'white', border: 'none', padding: '10px 20px', borderRadius: '8px', cursor: 'pointer', fontWeight: 600, fontSize: '14px' }}>
+                        style={{ background: '#111', color: 'white', border: 'none', padding: '10px 20px', borderRadius: '8px', cursor: 'pointer', fontWeight: 600, fontSize: 'clamp(13px, 3vw, 14px)' }}>
                         Pay ₹{(m.amount_paise / 100).toLocaleString('en-IN')}
                       </button>
                     )
@@ -529,14 +545,14 @@ export default function PayPage() {
                   {m.status === 'funded' && (
                     isFreelancer ? (
                       <button onClick={() => setSubmitFor(m.id)}
-                        style={{ background: '#111', color: 'white', border: 'none', padding: '10px 20px', borderRadius: '8px', cursor: 'pointer', fontWeight: 600, fontSize: '14px' }}>
+                        style={{ background: '#111', color: 'white', border: 'none', padding: '10px 20px', borderRadius: '8px', cursor: 'pointer', fontWeight: 600, fontSize: 'clamp(13px, 3vw, 14px)' }}>
                         Submit Work
                       </button>
                     ) : (
                       <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'flex-end', gap: '6px' }}>
-                        <span style={{ color: '#1D9E75', fontSize: '13px', fontWeight: 500 }}>⏳ Awaiting submission</span>
+                        <span style={{ color: '#1D9E75', fontSize: 'clamp(12px, 2.8vw, 13px)', fontWeight: 500 }}>⏳ Awaiting submission</span>
                         <span onClick={() => { setDisputeMilestone(m); setShowDispute(true) }}
-                          style={{ color: '#e74c3c', fontSize: '12px', cursor: 'pointer', textDecoration: 'underline' }}>
+                          style={{ color: '#e74c3c', fontSize: 'clamp(11px, 2.5vw, 12px)', cursor: 'pointer', textDecoration: 'underline' }}>
                           ⚠️ Raise a dispute
                         </span>
                       </div>
@@ -544,39 +560,39 @@ export default function PayPage() {
                   )}
 
                   {m.status === 'submitted' && !isFreelancer && (
-                    <div style={{ display: 'flex', gap: '8px' }}>
+                    <div style={{ display: 'flex', gap: '8px', flexWrap: 'wrap' }}>
                       <button onClick={() => setRequestChangeFor(m.id)}
-                        style={{ background: 'white', border: '1px solid #e5e5e5', color: '#111', padding: '10px 16px', borderRadius: '8px', cursor: 'pointer', fontWeight: 600, fontSize: '14px' }}>
+                        style={{ background: 'white', border: '1px solid #e5e5e5', color: '#111', padding: '10px 16px', borderRadius: '8px', cursor: 'pointer', fontWeight: 600, fontSize: 'clamp(13px, 3vw, 14px)' }}>
                         Request Changes
                       </button>
                       <button onClick={() => handleApprove(m)}
-                        style={{ background: '#1D9E75', color: 'white', border: 'none', padding: '10px 20px', borderRadius: '8px', cursor: 'pointer', fontWeight: 600, fontSize: '14px' }}>
+                        style={{ background: '#1D9E75', color: 'white', border: 'none', padding: '10px 20px', borderRadius: '8px', cursor: 'pointer', fontWeight: 600, fontSize: 'clamp(13px, 3vw, 14px)' }}>
                         ✅ Approve & Release
                       </button>
                     </div>
                   )}
 
                   {m.status === 'submitted' && isFreelancer && (
-                    <span style={{ color: '#f59e0b', fontSize: '13px', fontWeight: 500 }}>📤 Awaiting client review</span>
+                    <span style={{ color: '#f59e0b', fontSize: 'clamp(12px, 2.8vw, 13px)', fontWeight: 500 }}>📤 Awaiting client review</span>
                   )}
 
                   {m.status === 'changes_requested' && (
                     isFreelancer ? (
                       <button onClick={() => setSubmitFor(m.id)}
-                        style={{ background: '#e74c3c', color: 'white', border: 'none', padding: '10px 20px', borderRadius: '8px', cursor: 'pointer', fontWeight: 600, fontSize: '14px' }}>
+                        style={{ background: '#e74c3c', color: 'white', border: 'none', padding: '10px 20px', borderRadius: '8px', cursor: 'pointer', fontWeight: 600, fontSize: 'clamp(13px, 3vw, 14px)' }}>
                         Resubmit Work
                       </button>
                     ) : (
-                      <span style={{ color: '#e74c3c', fontSize: '13px', fontWeight: 500 }}>🔄 Waiting on freelancer</span>
+                      <span style={{ color: '#e74c3c', fontSize: 'clamp(12px, 2.8vw, 13px)', fontWeight: 500 }}>🔄 Waiting on freelancer</span>
                     )
                   )}
 
-                  {m.status === 'released' && <span style={{ color: '#1D9E75', fontSize: '13px', fontWeight: 500 }}>✅ Released</span>}
-                  {m.status === 'disputed' && <span style={{ color: '#e74c3c', fontSize: '13px', fontWeight: 500 }}>Disputed</span>}
+                  {m.status === 'released' && <span style={{ color: '#1D9E75', fontSize: 'clamp(12px, 2.8vw, 13px)', fontWeight: 500 }}>✅ Released</span>}
+                  {m.status === 'disputed' && <span style={{ color: '#e74c3c', fontSize: 'clamp(12px, 2.8vw, 13px)', fontWeight: 500 }}>Disputed</span>}
                 </div>
               </div>
 
-              <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '11px', color: '#4b5563', marginBottom: '6px', fontWeight: 500 }}>
+              <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: 'clamp(10px, 2.2vw, 11px)', color: '#4b5563', marginBottom: '6px', fontWeight: 500 }}>
                 <span>Locked</span><span>Submitted</span><span>Released</span>
               </div>
               <div style={{ background: '#f0f0f0', borderRadius: '4px', height: '6px' }}>
@@ -585,10 +601,9 @@ export default function PayPage() {
             </div>
           ))}
 
-          {/* How are you protected? */}
           {!isFreelancer && (
             <div style={cardStyle}>
-              <h3 style={{ margin: '0 0 16px', fontSize: '15px', fontWeight: 600, color: '#111' }}>
+              <h3 style={{ margin: '0 0 16px', fontSize: 'clamp(14px, 3.2vw, 15px)', fontWeight: 600, color: '#111' }}>
                 🛡️ How are you protected?
               </h3>
               {[
@@ -598,12 +613,12 @@ export default function PayPage() {
                 { num: '4', title: 'Ghosting? Get a refund', desc: 'If freelancer disappears, raise a dispute and get a full refund.' },
               ].map(s => (
                 <div key={s.num} style={{ display: 'flex', gap: '14px', marginBottom: '16px', alignItems: 'flex-start' }}>
-                  <div style={{ background: '#1D9E75', color: 'white', width: '28px', height: '28px', borderRadius: '50%', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '13px', fontWeight: 700, flexShrink: 0 }}>
+                  <div style={{ background: '#1D9E75', color: 'white', width: '28px', height: '28px', borderRadius: '50%', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 'clamp(12px, 2.8vw, 13px)', fontWeight: 700, flexShrink: 0 }}>
                     {s.num}
                   </div>
-                  <div>
-                    <p style={{ margin: '0 0 2px', fontWeight: 600, color: '#111', fontSize: '14px' }}>{s.title}</p>
-                    <p style={{ margin: 0, color: '#374151', fontSize: '13px', fontWeight: 500, lineHeight: '1.4' }}>{s.desc}</p>
+                  <div style={{ minWidth: 0 }}>
+                    <p style={{ margin: '0 0 2px', fontWeight: 600, color: '#111', fontSize: 'clamp(13px, 3vw, 14px)' }}>{s.title}</p>
+                    <p style={{ margin: 0, color: '#374151', fontSize: 'clamp(12px, 2.8vw, 13px)', fontWeight: 500, lineHeight: '1.4' }}>{s.desc}</p>
                   </div>
                 </div>
               ))}
@@ -611,30 +626,29 @@ export default function PayPage() {
           )}
         </div>
 
-        {/* Right Side Sidebar Panel */}
         <div className="sidebar-activity-slot">
-          <div style={{ 
-            background: 'rgba(255, 255, 255, 0.6)', 
+          <div style={{
+            background: 'rgba(255, 255, 255, 0.6)',
             backdropFilter: 'blur(10px)',
-            border: '1px solid rgba(0, 0, 0, 0.08)', 
-            borderRadius: '16px', 
-            padding: '24px', 
-            position: 'sticky', 
+            border: '1px solid rgba(0, 0, 0, 0.08)',
+            borderRadius: '16px',
+            padding: 'clamp(16px, 4vw, 24px)',
+            position: 'sticky',
             top: '20px',
             display: 'flex',
             flexDirection: 'column',
-            maxHeight: 'calc(100vh - 140px)', 
+            maxHeight: 'calc(100vh - 140px)',
             boxSizing: 'border-box'
           }}>
-            <h3 style={{ margin: '0 0 16px', fontSize: '14px', fontWeight: 700, color: '#111827' }}>🟢 Live activity</h3>
-            
-            <div 
+            <h3 style={{ margin: '0 0 16px', fontSize: 'clamp(13px, 3vw, 14px)', fontWeight: 700, color: '#111827' }}>🟢 Live activity</h3>
+
+            <div
               className="smooth-scroll-box"
-              style={{ 
-                overflowY: 'auto', 
+              style={{
+                overflowY: 'auto',
                 paddingRight: '4px',
                 flex: 1,
-                WebkitOverflowScrolling: 'touch' 
+                WebkitOverflowScrolling: 'touch'
               }}
             >
               {activity.map((a, i) => (
@@ -643,9 +657,9 @@ export default function PayPage() {
                     <div style={{ width: '10px', height: '10px', borderRadius: '50%', background: a.color, marginTop: '4px', flexShrink: 0, boxShadow: `0 0 8px ${a.color}` }} />
                     {i < activity.length - 1 && <div style={{ width: '1px', background: 'rgba(0,0,0,0.08)', flex: 1, marginTop: '4px' }} />}
                   </div>
-                  <div style={{ paddingBottom: '4px' }}>
-                    <p style={{ margin: '0 0 3px', fontSize: '13px', color: '#111827', fontWeight: 500, lineHeight: '1.4' }}>{a.text}</p>
-                    <p style={{ margin: 0, fontSize: '11px', color: '#4b5563', fontWeight: 600 }}>{a.time}</p>
+                  <div style={{ paddingBottom: '4px', minWidth: 0 }}>
+                    <p style={{ margin: '0 0 3px', fontSize: 'clamp(12px, 2.8vw, 13px)', color: '#111827', fontWeight: 500, lineHeight: '1.4' }}>{a.text}</p>
+                    <p style={{ margin: 0, fontSize: 'clamp(10px, 2.2vw, 11px)', color: '#4b5563', fontWeight: 600 }}>{a.time}</p>
                   </div>
                 </div>
               ))}
@@ -654,45 +668,42 @@ export default function PayPage() {
         </div>
       </div>
 
-      {/* FOOTER LINKS */}
-    {/* TERMS AND CONDITION REFUND POLICY - FULL PAGE WIDTH */}
-<div style={{ width: '100%', marginTop: '24px' }}>
-  <div style={{
-    background: 'rgba(255, 255, 255, 0.45)',
-    backdropFilter: 'blur(10px)',
-    borderTop: '1px solid rgba(0, 0, 0, 0.08)',    // Poore page par top border clean lagegi
-    borderBottom: '1px solid rgba(0, 0, 0, 0.08)', // Bottom border
-    padding: '20px 32px',
-    display: 'flex',
-    justifyContent: 'center',
-    gap: '24px',
-    flexWrap: 'wrap',
-    width: '100%',
-    boxSizing: 'border-box' // Padding layout ko screen se bahar stretch nahi karne dega
-  }}>
-    <a href="/terms" style={{ color: '#4b5563', fontSize: '13px', fontWeight: 600, textDecoration: 'none' }} className="footer-anchor">Terms & Conditions</a>
-    <a href="/refund-policy" style={{ color: '#4b5563', fontSize: '13px', fontWeight: 600, textDecoration: 'none' }} className="footer-anchor">Refund Policy</a>
-  </div>
-</div>
+      <div style={{ width: '100%', marginTop: '24px' }}>
+        <div style={{
+          background: 'rgba(255, 255, 255, 0.45)',
+          backdropFilter: 'blur(10px)',
+          borderTop: '1px solid rgba(0, 0, 0, 0.08)',
+          borderBottom: '1px solid rgba(0, 0, 0, 0.08)',
+          padding: '20px 32px',
+          display: 'flex',
+          justifyContent: 'center',
+          gap: '24px',
+          flexWrap: 'wrap',
+          width: '100%',
+          boxSizing: 'border-box'
+        }}>
+          <a href="/terms" style={{ color: '#4b5563', fontSize: 'clamp(12px, 2.8vw, 13px)', fontWeight: 600, textDecoration: 'none' }} className="footer-anchor">Terms & Conditions</a>
+          <a href="/refund-policy" style={{ color: '#4b5563', fontSize: 'clamp(12px, 2.8vw, 13px)', fontWeight: 600, textDecoration: 'none' }} className="footer-anchor">Refund Policy</a>
+        </div>
+      </div>
 
-      {/* CONTAINER MODAL WINDOW: REVISIONS NOTES DISPATCH INTERFACE */}
       {requestChangeFor && (
         <div style={modalOverlayStyle} onClick={() => setRequestChangeFor(null)}>
           <div style={modalContentStyle} onClick={e => e.stopPropagation()}>
             <div style={{ display: 'flex', alignItems: 'center', gap: '10px', marginBottom: '8px' }}>
-              <span style={{ background: '#fdeeee', color: '#e74c3c', width: '32px', height: '32px', borderRadius: '50%', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '16px' }}>🔄</span>
-              <h3 style={{ margin: 0, color: '#111', fontSize: '18px' }}>Request changes</h3>
+              <span style={{ background: '#fdeeee', color: '#e74c3c', width: '32px', height: '32px', borderRadius: '50%', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '16px', flexShrink: 0 }}>🔄</span>
+              <h3 style={{ margin: 0, color: '#111', fontSize: 'clamp(16px, 4vw, 18px)' }}>Request changes</h3>
             </div>
-            <p style={{ margin: '0 0 16px', color: '#888', fontSize: '13px' }}>Specify changes you want.</p>
-            
-            <textarea 
-              value={changeNote} 
+            <p style={{ margin: '0 0 16px', color: '#888', fontSize: 'clamp(12px, 2.8vw, 13px)' }}>Specify changes you want.</p>
+
+            <textarea
+              value={changeNote}
               onChange={e => setChangeNote(e.target.value)}
               placeholder="e.g. Logo color match nahi kar raha brand guide se..."
               rows={4}
-              style={textareaStyle} 
+              style={textareaStyle}
             />
-            
+
             <div style={{ display: 'flex', gap: '10px' }}>
               <button onClick={() => setRequestChangeFor(null)} style={cancelModalBtnStyle}>Cancel</button>
               <button onClick={handleRequestChanges} style={submitDarkModalBtnStyle}>Send request</button>
@@ -701,22 +712,21 @@ export default function PayPage() {
         </div>
       )}
 
-      {/* CONTAINER MODAL WINDOW: TASK DELIVERY PROOF SUBMISSION INTERFACE */}
       {submitFor && (
         <div style={modalOverlayStyle} onClick={() => setSubmitFor(null)}>
           <div style={modalContentStyle} onClick={e => e.stopPropagation()}>
             <div style={{ display: 'flex', alignItems: 'center', gap: '10px', marginBottom: '8px' }}>
-              <span style={{ background: '#e8f5ef', color: '#1D9E75', width: '32px', height: '32px', borderRadius: '50%', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '16px' }}>📤</span>
-              <h3 style={{ margin: 0, color: '#111', fontSize: '18px' }}>Submit work</h3>
+              <span style={{ background: '#e8f5ef', color: '#1D9E75', width: '32px', height: '32px', borderRadius: '50%', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '16px', flexShrink: 0 }}>📤</span>
+              <h3 style={{ margin: 0, color: '#111', fontSize: 'clamp(16px, 4vw, 18px)' }}>Submit work</h3>
             </div>
-            <p style={{ margin: '0 0 16px', color: '#888', fontSize: '13px' }}> Share the link of your work (Drive, GitHub, Figma, etc).</p>
-            
-            <label style={{ fontSize: '13px', color: '#555', fontWeight: 500 }}>Submission link *</label>
+            <p style={{ margin: '0 0 16px', color: '#888', fontSize: 'clamp(12px, 2.8vw, 13px)' }}> Share the link of your work (Drive, GitHub, Figma, etc).</p>
+
+            <label style={{ fontSize: 'clamp(12px, 2.8vw, 13px)', color: '#555', fontWeight: 500 }}>Submission link *</label>
             <input value={submissionLink} onChange={e => setSubmissionLink(e.target.value)} placeholder="https://drive.google.com/..." style={modalInputStyle} />
 
-            <label style={{ fontSize: '13px', color: '#555', fontWeight: 500, display: 'block', marginTop: '14px' }}>Note (optional)</label>
+            <label style={{ fontSize: 'clamp(12px, 2.8vw, 13px)', color: '#555', fontWeight: 500, display: 'block', marginTop: '14px' }}>Note (optional)</label>
             <textarea value={submissionNote} onChange={e => setSubmissionNote(e.target.value)} placeholder=" Anything you want to say to the client..." rows={3} style={textareaStyle} />
-            
+
             <div style={{ display: 'flex', gap: '10px', marginTop: '4px' }}>
               <button onClick={() => setSubmitFor(null)} style={cancelModalBtnStyle}>Cancel</button>
               <button onClick={handleSubmitWork} style={{ ...submitGreenModalBtnStyle }}>Submit</button>
@@ -725,22 +735,21 @@ export default function PayPage() {
         </div>
       )}
 
-      {/* CONTAINER MODAL WINDOW: FORMAL MEDIATION ESCROW DISPUTE FILE INTERFACE */}
       {showDispute && (
         <div style={modalOverlayStyle} onClick={() => setShowDispute(false)}>
           <div style={modalContentStyle} onClick={e => e.stopPropagation()}>
             <div style={{ display: 'flex', alignItems: 'center', gap: '10px', marginBottom: '8px' }}>
-              <span style={{ background: '#fdeeee', color: '#e74c3c', width: '32px', height: '32px', borderRadius: '50%', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '16px' }}>⚠️</span>
-              <h3 style={{ margin: 0, color: '#111', fontSize: '18px' }}>Raise a Dispute</h3>
+              <span style={{ background: '#fdeeee', color: '#e74c3c', width: '32px', height: '32px', borderRadius: '50%', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '16px', flexShrink: 0 }}>⚠️</span>
+              <h3 style={{ margin: 0, color: '#111', fontSize: 'clamp(16px, 4vw, 18px)' }}>Raise a Dispute</h3>
             </div>
-            <p style={{ margin: '0 0 6px', color: '#888', fontSize: '13px' }}>Milestone: <strong style={{ color: '#111' }}>{disputeMilestone?.title}</strong></p>
-            <p style={{ margin: '0 0 16px', color: '#888', fontSize: '13px' }}>After raising a dispute, our team will review the case and process the refund. Please note that this action is irreversible.</p>
+            <p style={{ margin: '0 0 6px', color: '#888', fontSize: 'clamp(12px, 2.8vw, 13px)' }}>Milestone: <strong style={{ color: '#111' }}>{disputeMilestone?.title}</strong></p>
+            <p style={{ margin: '0 0 16px', color: '#888', fontSize: 'clamp(12px, 2.8vw, 13px)' }}>After raising a dispute, our team will review the case and process the refund. Please note that this action is irreversible.</p>
 
-            <label style={{ fontSize: '13px', color: '#555', fontWeight: 500 }}>Reason *</label>
+            <label style={{ fontSize: 'clamp(12px, 2.8vw, 13px)', color: '#555', fontWeight: 500 }}>Reason *</label>
             <textarea value={disputeReason} onChange={e => setDisputeReason(e.target.value)} placeholder="e.g. Freelancer has not responded for more than 7 days..." rows={4} style={textareaStyle} />
 
             <div style={{ background: '#fff8e1', border: '1px solid #f59e0b', borderRadius: '8px', padding: '12px', marginBottom: '20px' }}>
-              <p style={{ margin: 0, fontSize: '12px', color: '#b45309', fontWeight: 600, lineHeight: '1.4' }}>
+              <p style={{ margin: 0, fontSize: 'clamp(11px, 2.5vw, 12px)', color: '#b45309', fontWeight: 600, lineHeight: '1.4' }}>
                 ⏱️ The refund process may take 5-7 business days. The amount will be transferred directly to your bank account from the Razorpay escrow.
               </p>
             </div>
@@ -753,92 +762,93 @@ export default function PayPage() {
         </div>
       )}
 
-      {/* CONTAINER MODAL WINDOW: DYNAMIC RECEIPT EXPORT WRAPPER */}
       {showReceipt && (
         <div style={modalOverlayStyle} onClick={() => setShowReceipt(false)}>
-          <div style={{ background: 'white', border: '1px solid rgba(0, 0, 0, 0.08)', borderRadius: '16px', width: '500px', maxHeight: '85vh', overflowY: 'auto', boxShadow: '0 20px 50px rgba(0,0,0,0.1)' }} onClick={e => e.stopPropagation()}>
+          <div style={{ background: 'white', border: '1px solid rgba(0, 0, 0, 0.08)', borderRadius: '16px', width: '100%', maxWidth: '500px', maxHeight: '85vh', overflowY: 'auto', boxShadow: '0 20px 50px rgba(0,0,0,0.1)' }} onClick={e => e.stopPropagation()}>
 
             <div id="receipt-content">
-              <div style={{ background: '#1D9E75', padding: '24px', borderRadius: '16px 16px 0 0', display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start' }}>
+              <div style={{ background: '#1D9E75', padding: '24px', borderRadius: '16px 16px 0 0', display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', flexWrap: 'wrap', gap: '10px' }}>
                 <div>
-                  <h2 style={{ margin: '0 0 4px', color: 'white', fontSize: '20px' }}>FreelanceShield</h2>
-                  <p style={{ margin: 0, color: 'rgba(255,255,255,0.8)', fontSize: '13px' }}>Escrow Payment Receipt</p>
+                  <h2 style={{ margin: '0 0 4px', color: 'white', fontSize: 'clamp(17px, 4vw, 20px)' }}>FreelanceShield</h2>
+                  <p style={{ margin: 0, color: 'rgba(255,255,255,0.8)', fontSize: 'clamp(12px, 2.8vw, 13px)' }}>Escrow Payment Receipt</p>
                 </div>
-                <div style={{ textDecoration: 'none', textAlign: 'right' }}>
-                  <p style={{ margin: '0 0 4px', color: 'white', fontSize: '13px', fontWeight: 600 }}>Receipt #{project.id.slice(0, 8).toUpperCase()}</p>
-                  <p style={{ margin: 0, color: 'rgba(255,255,255,0.8)', fontSize: '12px' }}>
+                <div style={{ textAlign: 'right' }}>
+                  <p style={{ margin: '0 0 4px', color: 'white', fontSize: 'clamp(12px, 2.8vw, 13px)', fontWeight: 600 }}>Receipt #{project.id.slice(0, 8).toUpperCase()}</p>
+                  <p style={{ margin: 0, color: 'rgba(255,255,255,0.8)', fontSize: 'clamp(11px, 2.5vw, 12px)' }}>
                     {new Date().toLocaleDateString('en-IN', { day: 'numeric', month: 'short', year: 'numeric' })}
                   </p>
                 </div>
               </div>
 
               <div style={{ padding: '24px' }}>
-                <p style={{ margin: '0 0 4px', fontSize: '12px', color: '#888', fontWeight: 600, textTransform: 'uppercase' }}>PROJECT</p>
-                <h3 style={{ margin: '0 0 16px', color: '#111' }}>{project.title}</h3>
+                <p style={{ margin: '0 0 4px', fontSize: 'clamp(11px, 2.5vw, 12px)', color: '#888', fontWeight: 600, textTransform: 'uppercase' }}>PROJECT</p>
+                <h3 style={{ margin: '0 0 16px', color: '#111', fontSize: 'clamp(15px, 3.5vw, 17px)' }}>{project.title}</h3>
 
                 <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '16px', marginBottom: '20px' }}>
                   <div>
-                    <p style={{ margin: '0 0 4px', fontSize: '12px', color: '#888' }}>Freelancer</p>
-                    <p style={{ margin: 0, fontWeight: 500, color: '#111' }}>{session?.user?.name || 'Freelancer'}</p>
+                    <p style={{ margin: '0 0 4px', fontSize: 'clamp(11px, 2.5vw, 12px)', color: '#888' }}>Freelancer</p>
+                    <p style={{ margin: 0, fontWeight: 500, color: '#111', fontSize: 'clamp(12px, 2.8vw, 14px)' }}>{session?.user?.name || 'Freelancer'}</p>
                   </div>
                   <div>
-                    <p style={{ margin: '0 0 4px', fontSize: '12px', color: '#888' }}>Client</p>
-                    <p style={{ margin: 0, fontWeight: 500, color: '#111' }}>{project.client_name}</p>
+                    <p style={{ margin: '0 0 4px', fontSize: 'clamp(11px, 2.5vw, 12px)', color: '#888' }}>Client</p>
+                    <p style={{ margin: 0, fontWeight: 500, color: '#111', fontSize: 'clamp(12px, 2.8vw, 14px)' }}>{project.client_name}</p>
                   </div>
                 </div>
 
-                <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: '12px', marginBottom: '24px' }}>
+                <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: '8px', marginBottom: '24px' }}>
                   {[
-                    { label: 'TOTAL PROJECT', val: `Rs. ${(project.total_amount_paise / 100).toLocaleString('en-IN')}`, color: '#111827' },
+                    { label: 'TOTAL', val: `Rs. ${(project.total_amount_paise / 100).toLocaleString('en-IN')}`, color: '#111827' },
                     { label: 'IN ESCROW', val: `Rs. ${inEscrow.toLocaleString('en-IN')}`, color: '#1D9E75' },
                     { label: 'RELEASED', val: `Rs. ${released.toLocaleString('en-IN')}`, color: '#111827' },
                   ].map(s => (
-                    <div key={s.label} style={{ background: '#f9f9f9', border: '1px solid rgba(0, 0, 0, 0.05)', borderRadius: '8px', padding: '12px', textAlign: 'center' }}>
-                      <p style={{ margin: '0 0 4px', fontSize: '10px', color: '#888', fontWeight: 600 }}>{s.label}</p>
-                      <p style={{ margin: 0, fontWeight: 700, color: s.color, fontSize: '15px' }}>{s.val}</p>
+                    <div key={s.label} style={{ background: '#f9f9f9', border: '1px solid rgba(0, 0, 0, 0.05)', borderRadius: '8px', padding: '10px', textAlign: 'center' }}>
+                      <p style={{ margin: '0 0 4px', fontSize: 'clamp(9px, 2vw, 10px)', color: '#888', fontWeight: 600 }}>{s.label}</p>
+                      <p style={{ margin: 0, fontWeight: 700, color: s.color, fontSize: 'clamp(12px, 2.8vw, 15px)' }}>{s.val}</p>
                     </div>
                   ))}
                 </div>
 
-                <p style={{ margin: '0 0 8px', fontWeight: 600, color: '#111' }}>Milestones</p>
-                <table style={{ width: '100%', borderCollapse: 'collapse', marginBottom: '20px' }}>
-                  <thead>
-                    <tr style={{ borderBottom: '1px solid #e5e5e5' }}>
-                      {['#', 'Milestone', 'Status', 'Amount'].map(h => (
-                        <th key={h} style={{ padding: '8px', textAlign: 'left', fontSize: '11px', color: '#888', fontWeight: 600 }}>{h}</th>
-                      ))}
-                    </tr>
-                  </thead>
-                  <tbody>
-                    {milestones.map(m => (
-                      <tr key={m.id} style={{ borderBottom: '1px solid #f0f0f0' }}>
-                        <td style={{ padding: '10px 8px', fontSize: '13px', color: '#888' }}>{m.position}</td>
-                        <td style={{ padding: '10px 8px', fontSize: '13px', color: '#111' }}>{m.title}</td>
-                        <td style={{ padding: '10px 8px', fontSize: '12px', color: m.status === 'released' ? '#1D9E75' : '#888' }}>
-                          {m.status === 'released' ? 'Released' : m.status === 'submitted' ? 'Work submitted' : m.status === 'funded' ? 'In escrow' : m.status === 'changes_requested' ? 'Changes requested' : 'Awaiting payment'}
-                        </td>
-                        <td style={{ padding: '10px 8px', fontSize: '13px', fontWeight: 600, color: '#111' }}>Rs. {(m.amount_paise / 100).toLocaleString('en-IN')}</td>
+                <p style={{ margin: '0 0 8px', fontWeight: 600, color: '#111', fontSize: 'clamp(13px, 3vw, 14px)' }}>Milestones</p>
+                <div style={{ overflowX: 'auto' }}>
+                  <table style={{ width: '100%', borderCollapse: 'collapse', marginBottom: '20px', minWidth: '380px' }}>
+                    <thead>
+                      <tr style={{ borderBottom: '1px solid #e5e5e5' }}>
+                        {['#', 'Milestone', 'Status', 'Amount'].map(h => (
+                          <th key={h} style={{ padding: '8px', textAlign: 'left', fontSize: 'clamp(10px, 2.2vw, 11px)', color: '#888', fontWeight: 600 }}>{h}</th>
+                        ))}
                       </tr>
-                    ))}
-                  </tbody>
-                </table>
+                    </thead>
+                    <tbody>
+                      {milestones.map(m => (
+                        <tr key={m.id} style={{ borderBottom: '1px solid #f0f0f0' }}>
+                          <td style={{ padding: '10px 8px', fontSize: 'clamp(12px, 2.8vw, 13px)', color: '#888' }}>{m.position}</td>
+                          <td style={{ padding: '10px 8px', fontSize: 'clamp(12px, 2.8vw, 13px)', color: '#111' }}>{m.title}</td>
+                          <td style={{ padding: '10px 8px', fontSize: 'clamp(11px, 2.5vw, 12px)', color: m.status === 'released' ? '#1D9E75' : '#888' }}>
+                            {m.status === 'released' ? 'Released' : m.status === 'submitted' ? 'Work submitted' : m.status === 'funded' ? 'In escrow' : m.status === 'changes_requested' ? 'Changes requested' : 'Awaiting payment'}
+                          </td>
+                          <td style={{ padding: '10px 8px', fontSize: 'clamp(12px, 2.8vw, 13px)', fontWeight: 600, color: '#111' }}>Rs. {(m.amount_paise / 100).toLocaleString('en-IN')}</td>
+                        </tr>
+                      ))}
+                    </tbody>
+                  </table>
+                </div>
 
-                <p style={{ margin: '0 0 10px', fontWeight: 600, color: '#111' }}>Activity timeline</p>
+                <p style={{ margin: '0 0 10px', fontWeight: 600, color: '#111', fontSize: 'clamp(13px, 3vw, 14px)' }}>Activity timeline</p>
                 {activity.slice(0, 6).map(a => (
                   <div key={a.id} style={{ display: 'flex', gap: '10px', marginBottom: '8px', alignItems: 'flex-start' }}>
                     <div style={{ width: '8px', height: '8px', borderRadius: '50%', background: a.color, marginTop: '5px', flexShrink: 0 }} />
-                    <div>
-                      <p style={{ margin: '0 0 2px', fontSize: '12px', color: '#111' }}>{a.text}</p>
-                      <p style={{ margin: 0, fontSize: '11px', color: '#888' }}>{a.time}</p>
+                    <div style={{ minWidth: 0 }}>
+                      <p style={{ margin: '0 0 2px', fontSize: 'clamp(11px, 2.5vw, 12px)', color: '#111' }}>{a.text}</p>
+                      <p style={{ margin: 0, fontSize: 'clamp(10px, 2.2vw, 11px)', color: '#888' }}>{a.time}</p>
                     </div>
                   </div>
                 ))}
 
                 <div style={{ borderTop: '1px solid #e5e5e5', marginTop: '20px', paddingTop: '12px' }}>
-                  <p style={{ margin: 0, fontSize: '11px', color: '#aaa' }}>
+                  <p style={{ margin: 0, fontSize: 'clamp(10px, 2.2vw, 11px)', color: '#aaa' }}>
                     Powered by Razorpay Route. Funds held in an RBI-regulated escrow account.
                   </p>
-                  <p style={{ margin: '4px 0 0', fontSize: '11px', color: '#1D9E75' }}>
+                  <p style={{ margin: '4px 0 0', fontSize: 'clamp(10px, 2.2vw, 11px)', color: '#1D9E75' }}>
                     freelanceshield.in &nbsp;·&nbsp; support@freelanceshield.in
                   </p>
                 </div>
@@ -846,10 +856,10 @@ export default function PayPage() {
             </div>
 
             <div style={{ padding: '0 24px 24px' }}>
-              <button onClick={downloadReceipt} style={{ width: '100%', padding: '12px', background: '#111', color: 'white', border: 'none', borderRadius: '8px', cursor: 'pointer', fontWeight: 600, marginBottom: '8px' }}>
+              <button onClick={downloadReceipt} style={{ width: '100%', padding: '12px', background: '#111', color: 'white', border: 'none', borderRadius: '8px', cursor: 'pointer', fontWeight: 600, marginBottom: '8px', fontSize: 'clamp(13px, 3vw, 14px)' }}>
                 ⬇ Download as PDF
               </button>
-              <button onClick={() => setShowReceipt(false)} style={{ width: '100%', padding: '12px', background: '#1D9E75', color: 'white', border: 'none', borderRadius: '8px', cursor: 'pointer', fontWeight: 600 }}>
+              <button onClick={() => setShowReceipt(false)} style={{ width: '100%', padding: '12px', background: '#1D9E75', color: 'white', border: 'none', borderRadius: '8px', cursor: 'pointer', fontWeight: 600, fontSize: 'clamp(13px, 3vw, 14px)' }}>
                 Close Receipt
               </button>
             </div>
@@ -870,7 +880,7 @@ export default function PayPage() {
         .brand-logo-container:hover .brand-text {
           color: #1D9E75;
         }
-        
+
         .footer-anchor:hover {
           color: #1D9E75 !important;
           text-decoration: underline !important;
@@ -882,7 +892,7 @@ export default function PayPage() {
         }
         .nav-text {
           color: #4b5563;
-          font-size: 14px;
+          font-size: clamp(12px, 2.8vw, 14px);
           font-weight: 600;
           cursor: pointer;
           transition: all 0.25s ease;
@@ -952,7 +962,7 @@ const cardStyle = {
   backdropFilter: 'blur(10px)',
   border: '1px solid rgba(0, 0, 0, 0.08)',
   borderRadius: '16px',
-  padding: '24px',
+  padding: 'clamp(16px, 4vw, 24px)',
 }
 
 const modalOverlayStyle = {
@@ -963,15 +973,16 @@ const modalOverlayStyle = {
   display: 'flex',
   alignItems: 'center',
   justifyContent: 'center',
-  padding: '0 20px'
+  padding: '16px'
 }
 
 const modalContentStyle = {
   background: 'white',
   border: '1px solid rgba(0, 0, 0, 0.08)',
   borderRadius: '16px',
-  width: '420px',
-  padding: '28px',
+  width: '100%',
+  maxWidth: '420px',
+  padding: 'clamp(20px, 5vw, 28px)',
   boxShadow: '0 20px 60px rgba(0,0,0,0.12)'
 }
 
@@ -980,7 +991,7 @@ const textareaStyle = {
   padding: '12px 14px',
   border: '1px solid #d1d5db',
   borderRadius: '10px',
-  fontSize: '14px',
+  fontSize: 'clamp(13px, 3vw, 14px)',
   marginTop: '6px',
   marginBottom: '20px',
   boxSizing: 'border-box',
@@ -997,7 +1008,7 @@ const modalInputStyle = {
   padding: '12px 14px',
   border: '1px solid #d1d5db',
   borderRadius: '10px',
-  fontSize: '14px',
+  fontSize: 'clamp(13px, 3vw, 14px)',
   marginTop: '4px',
   marginBottom: '16px',
   boxSizing: 'border-box',
@@ -1016,7 +1027,7 @@ const cancelModalBtnStyle = {
   cursor: 'pointer',
   fontWeight: 600,
   color: '#4b5563',
-  fontSize: '14px'
+  fontSize: 'clamp(13px, 3vw, 14px)'
 }
 
 const submitDarkModalBtnStyle = {
@@ -1028,7 +1039,7 @@ const submitDarkModalBtnStyle = {
   borderRadius: '10px',
   cursor: 'pointer',
   fontWeight: 600,
-  fontSize: '14px',
+  fontSize: 'clamp(13px, 3vw, 14px)',
   boxShadow: '0 4px 12px rgba(0,0,0,0.1)'
 }
 
@@ -1041,6 +1052,6 @@ const submitGreenModalBtnStyle = {
   borderRadius: '10px',
   cursor: 'pointer',
   fontWeight: 600,
-  fontSize: '14px',
+  fontSize: 'clamp(13px, 3vw, 14px)',
   boxShadow: '0 4px 12px rgba(29,158,117,0.15)'
 }

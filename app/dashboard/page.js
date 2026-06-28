@@ -4,7 +4,7 @@ import Link from 'next/link'
 import { signOut, useSession } from 'next-auth/react'
 import { useRouter } from 'next/navigation'
 import Footer from '../components/Footer' 
-
+import Image from "next/image";
 export default function Dashboard() {
   const router = useRouter()
   const { data: session, status } = useSession()
@@ -31,7 +31,15 @@ export default function Dashboard() {
         const res = await fetch(`/api/projects?freelancer_id=${session.user.id}`)
         if (!res.ok) throw new Error('Failed to fetch projects')
         const data = await res.json()
-        setProjects(data)
+
+        const sortedData = data.map(p => ({
+          ...p,
+          milestones: p.milestones
+            ? [...p.milestones].sort((a, b) => (a.position || 0) - (b.position || 0))
+            : p.milestones
+        }))
+
+        setProjects(sortedData)
       } catch (err) {
         setError(err.message)
       } finally {
@@ -167,12 +175,32 @@ export default function Dashboard() {
         }}>
           <Link href="/" style={{ textDecoration: 'none' }} className="brand-logo-container">
             <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
-              <span className="logo-box" style={{
-                background: '#1D9E75', color: 'white', width: '32px', height: '32px',
-                borderRadius: '8px', display: 'flex', alignItems: 'center',
-                justifyContent: 'center', fontWeight: 700, fontSize: 'clamp(13px, 3vw, 15px)',
-                transition: 'all 0.2s ease'
-              }}>F</span>
+            <div
+  className="logo-box"
+  style={{
+    width: '36px',
+    height: '36px',
+    borderRadius: '8px',
+    overflow: 'hidden',
+    display: 'flex',
+    alignItems: 'center',
+    justifyContent: 'center',
+    transition: 'all 0.2s ease'
+  }}
+>
+  <Image
+    src="/logo.png"
+    alt="FreelanceShield Logo"
+    width={36}
+    height={36}
+    priority
+    style={{
+      width: '100%',
+      height: '100%',
+      objectFit: 'contain'
+    }}
+  />
+</div>
               <span className="brand-text" style={{ 
                 fontWeight: 700, color: '#111827', fontSize: 'clamp(15px, 3.5vw, 18px)', 
                 letterSpacing: '-0.02em', transition: 'all 0.2s ease' 
@@ -240,9 +268,20 @@ export default function Dashboard() {
 
       <div style={{ maxWidth: '940px', margin: '20px auto', padding: '0 20px' }}>
 
-        <div style={{ marginBottom: '32px' }}>
-          <h2 style={{ margin: '0 0 6px', fontSize: 'clamp(22px, 5.5vw, 32px)', fontWeight: 800, color: '#111827', letterSpacing: '-0.02em' }}>Your Projects</h2>
-          <p style={{ margin: 0, color: '#273142', fontSize: 'clamp(12px, 2.8vw, 14px)', fontWeight: 600 }}>Welcome back, <strong style={{ color: '#111827' }}>{session?.user?.name || 'User'}</strong>. Track your dynamic escrow pipelines.</p>
+        <div style={{ marginBottom: '20px', display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', flexWrap: 'wrap', gap: '12px' }}>
+          <div>
+            <h2 style={{ margin: '0 0 6px', fontSize: 'clamp(22px, 5.5vw, 32px)', fontWeight: 800, color: '#111827', letterSpacing: '-0.02em' }}>Your Projects</h2>
+            <p style={{ margin: 0, color: '#273142', fontSize: 'clamp(12px, 2.8vw, 14px)', fontWeight: 600 }}>Welcome back, <strong style={{ color: '#111827' }}>{session?.user?.name || 'User'}</strong>. Track your dynamic escrow pipelines.</p>
+          </div>
+          <Link href="/create" className="mobile-create-btn">
+            <button style={{
+              background: '#1D9E75', border: 'none', color: 'white',
+              padding: '10px 18px', borderRadius: '8px', cursor: 'pointer',
+              fontWeight: 600, fontSize: 'clamp(12px, 2.8vw, 13px)', whiteSpace: 'nowrap'
+            }}>
+              + New Project
+            </button>
+          </Link>
         </div>
 
         <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(160px, 1fr))', gap: '16px', marginBottom: '36px' }}>
@@ -436,14 +475,28 @@ export default function Dashboard() {
         {filtered.length === 0 && (
           <div style={{ textAlign: 'center', padding: '60px 20px', background: 'rgba(255, 255, 255, 0.5)', backdropFilter: 'blur(4px)', borderRadius: '12px', border: '1px solid rgba(0, 0, 0, 0.08)' }}>
             <p style={{ fontSize: 'clamp(28px, 7vw, 36px)', margin: '0 0 12px' }}>🛡️</p>
-            <h3 style={{ margin: '0 0 8px', color: '#111827', fontWeight: 700, fontSize: 'clamp(15px, 3.5vw, 17px)' }}>No project matches found</h3>
-            <p style={{ color: '#4b5563', margin: '0 0 20px', fontSize: 'clamp(12px, 2.8vw, 14px)' }}>No contract entries match your query tracking specifications.</p>
-            <button 
-              onClick={() => { setSearchQuery(''); setFilter('all'); }} 
-              style={{ background: '#1D9E75', color: 'white', border: 'none', padding: '12px 24px', borderRadius: '8px', cursor: 'pointer', fontWeight: 600, fontSize: 'clamp(13px, 3vw, 14px)' }}
-            >
-              Reset Filters
-            </button>
+            {projects.length === 0 ? (
+              <>
+                <h3 style={{ margin: '0 0 8px', color: '#111827', fontWeight: 700, fontSize: 'clamp(15px, 3.5vw, 17px)' }}>No projects yet</h3>
+                <p style={{ color: '#4b5563', margin: '0 0 20px', fontSize: 'clamp(12px, 2.8vw, 14px)' }}>Create your first protected project to get started.</p>
+                <Link href="/create">
+                  <button style={{ background: '#1D9E75', color: 'white', border: 'none', padding: '12px 24px', borderRadius: '8px', cursor: 'pointer', fontWeight: 600, fontSize: 'clamp(13px, 3vw, 14px)' }}>
+                    + Create Project
+                  </button>
+                </Link>
+              </>
+            ) : (
+              <>
+                <h3 style={{ margin: '0 0 8px', color: '#111827', fontWeight: 700, fontSize: 'clamp(15px, 3.5vw, 17px)' }}>No project matches found</h3>
+                <p style={{ color: '#4b5563', margin: '0 0 20px', fontSize: 'clamp(12px, 2.8vw, 14px)' }}>No contract entries match your query tracking specifications.</p>
+                <button 
+                  onClick={() => { setSearchQuery(''); setFilter('all'); }} 
+                  style={{ background: '#1D9E75', color: 'white', border: 'none', padding: '12px 24px', borderRadius: '8px', cursor: 'pointer', fontWeight: 600, fontSize: 'clamp(13px, 3vw, 14px)' }}
+                >
+                  Reset Filters
+                </button>
+              </>
+            )}
           </div>
         )}
       </div>
@@ -516,11 +569,14 @@ export default function Dashboard() {
         .active-link .nav-text {
           color: #111827 !important;
         }
+
+        .mobile-create-btn { display: none; }
         
         @media (max-width: 768px) {
           .desktop-nav-menu { display: none !important; }
           .mobile-menu-burger-icon { display: block !important; }
           .mobile-dropdown-panel { display: flex !important; }
+          .mobile-create-btn { display: block !important; }
         }
       `}</style>
 

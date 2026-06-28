@@ -3,7 +3,7 @@ import { useState, useEffect } from 'react'
 import { useRouter } from 'next/navigation'
 import { useSession } from 'next-auth/react'
 import Link from 'next/link'
-
+import Image from 'next/image'
 export default function BankDetails() {
   const router = useRouter()
   const { data: session } = useSession()
@@ -111,35 +111,100 @@ export default function BankDetails() {
 
   if (fetching) {
     return (
-      <div style={{ background: '#f5f5f0', minHeight: '100vh', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-        <p style={{ color: '#888' }}>Loading...</p>
+      <div style={{ background: 'linear-gradient(135deg, #d4f7e6 0%, #a7f3d0 100%)', minHeight: '100vh', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+        <p style={{ color: '#1D9E75', fontFamily: 'sans-serif', fontWeight: 600 }}>Loading banking parameters...</p>
       </div>
     )
   }
 
   return (
-    <div style={{ background: '#f5f5f0', minHeight: '100vh', fontFamily: 'sans-serif' }}>
+    <div style={{ 
+      background: 'linear-gradient(180deg, #d4f7e6 0%, #bbf7d0 50%, #a7f3d0 100%)', 
+      minHeight: '100vh', 
+      fontFamily: '-apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif',
+      paddingBottom: '40px',
+      color: '#111827'
+    }}>
 
-      <nav style={{ background: 'white', display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: '16px 40px', borderBottom: '1px solid #e5e5e5' }}>
-        <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
-          <span style={{ background: '#1D9E75', color: 'white', width: '32px', height: '32px', borderRadius: '8px', display: 'flex', alignItems: 'center', justifyContent: 'center', fontWeight: 700 }}>F</span>
-          <span style={{ fontWeight: 600, color: '#111', fontSize: '16px' }}>FreelanceShield</span>
-        </div>
-        <Link href="/dashboard">
-          <span style={{ color: '#888', fontSize: '14px', cursor: 'pointer' }}>← Back to Dashboard</span>
-        </Link>
-      </nav>
+      {/* Static Glassmorphism Navbar Layer (Matches Project UI Matrix Specs) */}
+      <div style={{ padding: '16px 20px', zIndex: 1000 }}>
+        <nav style={{
+          background: 'rgba(255, 255, 255, 0.7)',
+          backdropFilter: 'blur(16px)',
+          WebkitBackdropFilter: 'blur(16px)',
+          display: 'flex',
+          justifyContent: 'space-between',
+          alignItems: 'center',
+          padding: '12px 32px',
+          borderRadius: '16px',
+          border: '1px solid rgba(0, 0, 0, 0.08)',
+          boxShadow: '0 8px 32px rgba(29, 158, 117, 0.08)',
+          maxWidth: '1200px',
+          margin: '0 auto'
+        }}>
+          {/* Logo Brand Anchor Node */}
+          <Link href="/" style={{ textDecoration: 'none' }} className="brand-logo-container">
+            <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
+             <div
+  className="logo-box"
+  style={{
+    width: '36px',
+    height: '36px',
+    borderRadius: '8px',
+    overflow: 'hidden',
+    display: 'flex',
+    alignItems: 'center',
+    justifyContent: 'center',
+    transition: 'all 0.2s ease'
+  }}
+>
+  <Image
+    src="/logo.png"
+    alt="FreelanceShield Logo"
+    width={36}
+    height={36}
+    priority
+    style={{
+      width: '100%',
+      height: '100%',
+      objectFit: 'contain'
+    }}
+  />
+</div>
+              <span className="brand-text nav-brand-text" style={{ 
+                fontWeight: 700, color: '#111827', fontSize: '18px', 
+                letterSpacing: '-0.02em', transition: 'all 0.2s ease' 
+              }}>FreelanceShield</span>
+            </div>
+          </Link>
+          
+          <Link href="/dashboard" style={{ textDecoration: 'none' }} className="nav-item">
+            <span className="nav-text">← Back to Dashboard</span>
+          </Link>
+        </nav>
+      </div>
 
-      <div style={{ maxWidth: '480px', margin: '40px auto', padding: '0 20px' }}>
+      {/* Core Banking Presentational Wrapper Box */}
+      <div style={{ maxWidth: '520px', margin: '20px auto', padding: '0 20px' }}>
 
-        <h2 style={{ margin: '0 0 4px', fontSize: '24px', color: '#111' }}>Bank details</h2>
-        <p style={{ margin: '0 0 24px', color: '#888', fontSize: '14px' }}>
+        <h2 style={{ margin: '0 0 6px', fontSize: 'clamp(22px, 5vw, 32px)', fontWeight: 800, color: '#111827', letterSpacing: '-0.02em' }}>Bank details</h2>
+        <p style={{ margin: '0 0 28px', color: '#273142', fontSize: 'clamp(12px, 2.5vw, 14px)', fontWeight: 600, lineHeight: 1.4 }}>
           Add these details so that when the client approves the milestone, the funds can be released directly into your account.
         </p>
 
-        <div style={{ background: 'white', border: '1px solid #e5e5e5', borderRadius: '12px', padding: '24px' }}>
+        {/* Translucent Glassmorphic Form Card Section Area */}
+        <div style={{ 
+          background: 'rgba(255, 255, 255, 0.6)', 
+          backdropFilter: 'blur(10px)',
+          border: '1px solid rgba(0, 0, 0, 0.08)', 
+          borderRadius: '20px', 
+          padding: '32px',
+          boxShadow: '0 10px 30px rgba(29, 158, 117, 0.02)'
+        }}>
 
-          <label style={{ fontSize: '13px', color: '#555', fontWeight: 500 }}>Account holder name *</label>
+          <div style={{ fontSize: '32px', marginBottom: '16px' }}>🏦</div>
+
+          <label style={labelStyle}>Account holder name *</label>
           <input
             name="bank_account_holder"
             value={form.bank_account_holder}
@@ -148,53 +213,132 @@ export default function BankDetails() {
             style={inputStyle}
           />
 
-          <label style={{ fontSize: '13px', color: '#555', fontWeight: 500, marginTop: '14px', display: 'block' }}>Account number *</label>
+          <label style={{ ...labelStyle, marginTop: '16px', display: 'block' }}>Account number *</label>
           <input
             name="bank_account_number"
             value={form.bank_account_number}
             onChange={handleChange}
             placeholder="1234567890123"
-            style={{ ...inputStyle, borderColor: errors.bank_account_number ? '#ff4d4f' : '#e5e5e5' }}
+            style={{ ...inputStyle, borderColor: errors.bank_account_number ? '#ff4d4f' : 'rgba(0, 0, 0, 0.08)' }}
           />
           {errors.bank_account_number && (
-            <span style={{ color: '#ff4d4f', fontSize: '12px', marginTop: '4px', display: 'block' }}>{errors.bank_account_number}</span>
+            <span style={{ color: '#ff4d4f', fontSize: '12px', marginTop: '6px', display: 'block', fontWeight: 500 }}>⚠️ {errors.bank_account_number}</span>
           )}
 
-          <label style={{ fontSize: '13px', color: '#555', fontWeight: 500, marginTop: '14px', display: 'block' }}>IFSC code *</label>
+          <label style={{ ...labelStyle, marginTop: '16px', display: 'block' }}>IFSC code *</label>
           <input
             name="bank_ifsc"
             value={form.bank_ifsc}
             onChange={handleChange}
             placeholder="SBIN0001234"
-            style={{ ...inputStyle, textTransform: 'uppercase', borderColor: errors.bank_ifsc ? '#ff4d4f' : '#e5e5e5' }}
+            style={{ ...inputStyle, textTransform: 'uppercase', borderColor: errors.bank_ifsc ? '#ff4d4f' : 'rgba(0, 0, 0, 0.08)' }}
           />
           {errors.bank_ifsc && (
-            <span style={{ color: '#ff4d4f', fontSize: '12px', marginTop: '4px', display: 'block' }}>{errors.bank_ifsc}</span>
+            <span style={{ color: '#ff4d4f', fontSize: '12px', marginTop: '6px', display: 'block', fontWeight: 500 }}>⚠️ {errors.bank_ifsc}</span>
           )}
 
-          <p style={{ fontSize: '12px', color: '#888', marginTop: '16px', background: '#f9f9f9', padding: '10px 12px', borderRadius: '8px' }}>
-            🔒 Your bank details are encrypted and securely stored. They are only used for payouts.
+          {/* Secure Information Stamp Node */}
+          <p style={{ fontSize: '12px', color: '#1D9E75', marginTop: '20px', background: 'rgba(29, 158, 117, 0.06)', padding: '12px 14px', borderRadius: '10px', fontWeight: 600, border: '1px solid rgba(29, 158, 117, 0.15)', lineHeight: 1.4 }}>
+            🔒 Your bank details are encrypted and securely stored. They are only processed via regulated transaction network loops for payouts.
           </p>
 
           <button onClick={handleSubmit} disabled={loading}
-            style={{ width: '100%', padding: '14px', background: '#111', color: 'white', border: 'none', borderRadius: '10px', fontSize: '15px', fontWeight: 600, cursor: loading ? 'not-allowed' : 'pointer', opacity: loading ? 0.7 : 1, marginTop: '20px' }}>
-            {loading ? 'Saving...' : 'Save bank details'}
+            style={{ 
+              width: '100%', 
+              padding: '14px', 
+              background: '#111827', 
+              color: 'white', 
+              border: 'none', 
+              borderRadius: '10px', 
+              fontSize: '15px', 
+              fontWeight: 600, 
+              cursor: loading ? 'not-allowed' : 'pointer', 
+              opacity: loading ? 0.7 : 1, 
+              marginTop: '24px',
+              boxShadow: '0 4px 14px rgba(0,0,0,0.12)',
+              transition: 'all 0.2s ease'
+            }}
+            className="submit-bank-btn"
+          >
+            {loading ? 'Saving Routing Data...' : 'Secure Payout Pipeline'}
           </button>
         </div>
       </div>
+
+      {/* Global CSS Transition Sheets Injector */}
+      <style jsx global>{`
+        .brand-logo-container:active .logo-box {
+          transform: scale(0.95);
+          box-shadow: 0 0 20px rgba(29, 158, 117, 0.9), 0 0 30px rgba(29, 158, 117, 0.5);
+          background: #111827 !important;
+        }
+        .brand-logo-container:active .brand-text {
+          color: #1D9E75 !important;
+          text-shadow: 0 0 15px rgba(29, 158, 117, 0.6);
+        }
+        .brand-logo-container:hover .brand-text {
+          color: #1D9E75;
+        }
+
+        .nav-item {
+          transition: all 0.25s ease;
+          position: relative;
+        }
+        .nav-text {
+          color: #4b5563;
+          font-size: 14px;
+          font-weight: 600;
+          cursor: pointer;
+          transition: all 0.25s ease;
+        }
+        .nav-item:hover .nav-text {
+          color: #1D9E75 !important;
+          text-shadow: 0 0 10px rgba(29, 158, 117, 0.4);
+        }
+        .nav-item:hover::after {
+          content: '';
+          position: absolute;
+          bottom: 0;
+          left: 0;
+          right: 0;
+          height: 2px;
+          background: rgba(29, 158, 117, 0.6);
+          border-radius: 2px;
+          box-shadow: 0 0 8px rgba(29, 158, 117, 0.5);
+        }
+
+        .submit-bank-btn:hover {
+          background: #1D9E75 !important;
+          box-shadow: 0 6px 20px rgba(29, 158, 117, 0.25) !important;
+        }
+
+        @media (max-width: 640px) {
+          .nav-brand-text { font-size: 16px !important; }
+        }
+      `}</style>
     </div>
   )
 }
 
+const labelStyle = {
+  fontSize: '12px',
+  color: '#374151',
+  fontWeight: 600,
+  marginBottom: '4px',
+  display: 'inline-block',
+}
+
 const inputStyle = {
   width: '100%',
-  padding: '10px 12px',
+  padding: '11px 14px',
   borderRadius: '8px',
-  border: '1px solid #e5e5e5',
+  border: '1px solid rgba(0, 0, 0, 0.08)',
   background: 'white',
-  color: '#111',
+  color: '#111827',
   fontSize: '14px',
   marginTop: '4px',
   boxSizing: 'border-box',
   outline: 'none',
+  fontWeight: 500,
+  transition: 'border-color 0.2s',
 }

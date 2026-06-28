@@ -4,6 +4,7 @@ import Link from 'next/link'
 import { useRouter } from 'next/navigation'
 import { useSession } from 'next-auth/react'
 import Footer from '../components/Footer'
+import Image from "next/image";
 
 export default function CreateProject() {
   const router = useRouter()
@@ -249,46 +250,122 @@ export default function CreateProject() {
     }}>
 
       {/* Floating Glassmorphism Navbar Layer */}
-      <div style={{ padding: '16px 20px', zIndex: 1000 }}>
-        <nav style={{
-          background: 'rgba(255, 255, 255, 0.7)',
-          backdropFilter: 'blur(16px)',
-          WebkitBackdropFilter: 'blur(16px)',
-          display: 'flex',
-          justifyContent: 'space-between',
-          alignItems: 'center',
-          padding: '12px 32px',
-          borderRadius: '16px',
-          border: '1px solid rgba(0, 0, 0, 0.08)',
-          boxShadow: '0 8px 32px rgba(29, 158, 117, 0.08)',
-          maxWidth: '1200px',
-          margin: '0 auto'
-        }}>
-          <Link href="/" style={{ textDecoration: 'none' }} className="brand-logo-container">
-            <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
-              <span className="logo-box" style={{
-                background: '#1D9E75', color: 'white', width: '32px', height: '32px',
-                borderRadius: '8px', display: 'flex', alignItems: 'center',
-                justifyContent: 'center', fontWeight: 700, fontSize: '15px',
-                transition: 'all 0.2s ease'
-              }}>F</span>
-              <span className="brand-text" style={{ 
-                fontWeight: 700, color: '#111827', fontSize: '18px', 
-                letterSpacing: '-0.02em', transition: 'all 0.2s ease' 
-              }}>FreelanceShield</span>
-            </div>
-          </Link>
-          <div style={{ display: 'flex', gap: '24px', alignItems: 'center' }} className="desktop-nav-menu">
-            <Link href="/dashboard" style={{ textDecoration: 'none' }} className="nav-item">
-              <span className="nav-text">Dashboard</span>
-            </Link>
-            <Link href="/create" style={{ textDecoration: 'none', position: 'relative', paddingBottom: '4px' }} className="nav-item active-link">
-              <span className="nav-text" style={{ color: '#111827' }}>New Project</span>
-              <div style={{ position: 'absolute', bottom: 0, left: 0, right: 0, height: '2.5px', background: '#1D9E75', borderRadius: '2px' }} />
-            </Link>
-          </div>
-        </nav>
+   {/* Floating Glassmorphism Navbar Layer */}
+<div style={{ padding: "16px 20px", zIndex: 1000 }}>
+  <nav
+    style={{
+      background: "rgba(255,255,255,0.7)",
+      backdropFilter: "blur(16px)",
+      WebkitBackdropFilter: "blur(16px)",
+      display: "flex",
+      justifyContent: "space-between",
+      alignItems: "center",
+      flexWrap: "wrap",
+      gap: "12px",
+      padding: "12px 20px",
+      borderRadius: "16px",
+      border: "1px solid rgba(0,0,0,0.08)",
+      boxShadow: "0 8px 32px rgba(29,158,117,0.08)",
+      maxWidth: "1200px",
+      margin: "0 auto",
+    }}
+  >
+    {/* Logo */}
+    <Link
+      href="/"
+      style={{ textDecoration: "none" }}
+      className="brand-logo-container"
+    >
+      <div style={{ display: "flex", alignItems: "center", gap: "10px" }}>
+        <div
+          style={{
+            width: "36px",
+            height: "36px",
+            borderRadius: "8px",
+            overflow: "hidden",
+            display: "flex",
+            alignItems: "center",
+            justifyContent: "center",
+          }}
+        >
+          <Image
+            src="/logo.png"
+            alt="FreelanceShield Logo"
+            width={36}
+            height={36}
+            priority
+            style={{
+              width: "100%",
+              height: "100%",
+              objectFit: "contain",
+            }}
+          />
+        </div>
+
+        <span
+          className="brand-text"
+          style={{
+            fontWeight: 700,
+            color: "#111827",
+            fontSize: "18px",
+            letterSpacing: "-0.02em",
+          }}
+        >
+          FreelanceShield
+        </span>
       </div>
+    </Link>
+
+    {/* Navigation */}
+    <div
+  className="desktop-nav-menu"
+  style={{
+    display: "flex",
+    alignItems: "center",
+    justifyContent: "flex-end",
+    gap: "20px",
+    flexWrap: "nowrap",
+  }}
+>
+      <Link
+        href="/dashboard"
+        style={{
+          textDecoration: "none",
+          color: "#6B7280",
+          fontWeight: 500,
+          transition: "0.2s",
+        }}
+      >
+        Dashboard
+      </Link>
+
+      <Link
+        href="/create"
+        style={{
+          textDecoration: "none",
+          position: "relative",
+          color: "#111827",
+          fontWeight: 600,
+          paddingBottom: "4px",
+        }}
+      >
+        New Project
+
+        <div
+          style={{
+            position: "absolute",
+            left: 0,
+            right: 0,
+            bottom: 0,
+            height: "2.5px",
+            background: "#1D9E75",
+            borderRadius: "2px",
+          }}
+        />
+      </Link>
+    </div>
+  </nav>
+</div>
 
       <div style={{ maxWidth: '680px', margin: '20px auto', padding: '0 20px' }}>
 
@@ -425,7 +502,7 @@ export default function CreateProject() {
     </div>
     
     {/* Right Side: Amount */}
-    <span style={{ color: '#4b5563', fontWeight: 500 }}>₹{fee.toLocaleString('en-IN')}</span>
+    <span style={{ color: '#4b5563', fontWeight: 500 }}>₹0 </span>
   </div>
   
   {/* Total Amount */}
@@ -444,51 +521,77 @@ export default function CreateProject() {
       </div>
 
       {/* Global CSS Injector Module */}
-      <style jsx global>{`
-        .brand-logo-container:active .logo-box {
-          transform: scale(0.95);
-          box-shadow: 0 0 20px rgba(29, 158, 117, 0.9), 0 0 30px rgba(29, 158, 117, 0.5);
-          background: #111827 !important;
-        }
-        .brand-logo-container:active .brand-text {
-          color: #1D9E75 !important;
-          text-shadow: 0 0 15px rgba(29, 158, 117, 0.6);
-        }
-        .brand-logo-container:hover .brand-text {
-          color: #1D9E75;
-        }
+  <style jsx global>{`
+  .brand-logo-container:active .logo-box {
+    transform: scale(0.95);
+    box-shadow: 0 0 20px rgba(29, 158, 117, 0.9), 0 0 30px rgba(29, 158, 117, 0.5);
+    background: #111827 !important;
+  }
 
-        .nav-item {
-          transition: all 0.25s ease;
-          position: relative;
-        }
-        .nav-text {
-          color: #4b5563;
-          font-size: 14px;
-          font-weight: 600;
-          cursor: pointer;
-          transition: all 0.25s ease;
-        }
-        .nav-item:hover .nav-text {
-          color: #1D9E75 !important;
-          text-shadow: 0 0 10px rgba(29, 158, 117, 0.4);
-        }
-        .nav-item:hover::after {
-          content: '';
-          position: absolute;
-          bottom: 0;
-          left: 0;
-          right: 0;
-          height: 2px;
-          background: rgba(29, 158, 117, 0.6);
-          border-radius: 2px;
-          box-shadow: 0 0 8px rgba(29, 158, 117, 0.5);
-        }
-        
-        @media (max-width: 768px) {
-          .desktop-nav-menu { display: none !important; }
-        }
-      `}</style>
+  .brand-logo-container:active .brand-text {
+    color: #1D9E75 !important;
+    text-shadow: 0 0 15px rgba(29, 158, 117, 0.6);
+  }
+
+  .brand-logo-container:hover .brand-text {
+    color: #1D9E75;
+  }
+
+  .nav-item {
+    transition: all 0.25s ease;
+    position: relative;
+  }
+
+  .nav-text {
+    color: #4b5563;
+    font-size: 14px;
+    font-weight: 600;
+    cursor: pointer;
+    transition: all 0.25s ease;
+  }
+
+  .nav-item:hover .nav-text {
+    color: #1D9E75 !important;
+    text-shadow: 0 0 10px rgba(29, 158, 117, 0.4);
+  }
+
+  .nav-item:hover::after {
+    content: '';
+    position: absolute;
+    bottom: 0;
+    left: 0;
+    right: 0;
+    height: 2px;
+    background: rgba(29, 158, 117, 0.6);
+    border-radius: 2px;
+    box-shadow: 0 0 8px rgba(29, 158, 117, 0.5);
+  }
+
+  /* MOBILE FIX */
+  @media (max-width: 768px) {
+    nav {
+      flex-direction: row !important;
+      justify-content: space-between !important;
+      align-items: center !important;
+    }
+
+    .desktop-nav-menu {
+      display: flex !important;
+      align-items: center;
+      gap: 14px;
+      flex-wrap: nowrap;
+    }
+
+    .brand-text {
+      font-size: 15px !important;
+    }
+
+    .desktop-nav-menu a {
+      font-size: 14px;
+      white-space: nowrap;
+    }
+  }
+`}</style>
       <Footer />
     </div>
   )
