@@ -619,7 +619,7 @@ export default function PayPage() {
               <span style={{ background: '#fdeeee', color: '#e74c3c', width: '32px', height: '32px', borderRadius: '50%', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '16px' }}>🔄</span>
               <h3 style={{ margin: 0, color: '#111', fontSize: '18px' }}>Request changes</h3>
             </div>
-            <p style={{ margin: '0 0 16px', color: '#888', fontSize: '13px' }}>Batao kya badalna hai — freelancer ko ye note milega.</p>
+            <p style={{ margin: '0 0 16px', color: '#888', fontSize: '13px' }}>Specify changes you want.</p>
             
             <textarea 
               value={changeNote} 

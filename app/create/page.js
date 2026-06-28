@@ -3,6 +3,7 @@ import { useState, useEffect } from 'react'
 import Link from 'next/link'
 import { useRouter } from 'next/navigation'
 import { useSession } from 'next-auth/react'
+import Footer from '../components/Footer'
 
 export default function CreateProject() {
   const router = useRouter()
@@ -215,19 +216,19 @@ export default function CreateProject() {
 
   if (checkingBank) {
     return (
-      <div style={{ background: '#f5f5f0', minHeight: '100vh', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-        <p style={{ color: '#888' }}>Loading...</p>
+      <div style={{ background: 'linear-gradient(135deg, #d4f7e6 0%, #a7f3d0 100%)', minHeight: '100vh', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+        <p style={{ color: '#1D9E75', fontFamily: 'sans-serif', fontWeight: 600 }}>Loading...</p>
       </div>
     )
   }
 
   if (!hasBankDetails) {
     return (
-      <div style={{ background: '#f5f5f0', minHeight: '100vh', display: 'flex', alignItems: 'center', justifyContent: 'center', flexDirection: 'column', padding: '20px' }}>
-        <div style={{ background: 'white', border: '1px solid #e5e5e5', borderRadius: '12px', padding: '32px', maxWidth: '400px', textAlign: 'center' }}>
+      <div style={{ background: 'linear-gradient(180deg, #d4f7e6 0%, #bbf7d0 50%, #a7f3d0 100%)', minHeight: '100vh', display: 'flex', alignItems: 'center', justifyContent: 'center', flexDirection: 'column', padding: '20px' }}>
+        <div style={{ background: 'rgba(255, 255, 255, 0.65)', backdropFilter: 'blur(10px)', border: '1px solid rgba(0, 0, 0, 0.08)', borderRadius: '16px', padding: '32px', maxWidth: '400px', textAlign: 'center', boxShadow: '0 10px 30px rgba(29,158,117,0.02)' }}>
           <p style={{ fontSize: '32px', margin: '0 0 12px' }}>🏦</p>
-          <h3 style={{ margin: '0 0 8px', color: '#111' }}>Add your bank details first</h3>
-          <p style={{ color: '#888', margin: '0 0 20px', fontSize: '14px' }}>
+          <h3 style={{ margin: '0 0 8px', color: '#111827', fontWeight: 700 }}>Add your bank details first</h3>
+          <p style={{ color: '#4b5563', margin: '0 0 20px', fontSize: '14px', fontWeight: 500 }}>
             We need your bank details to release payments when a client approves a milestone.
           </p>
           <button onClick={() => router.push('/settings/bank-details')}
@@ -240,55 +241,84 @@ export default function CreateProject() {
   }
 
   return (
-    <div style={{ background: '#f5f5f0', minHeight: '100vh', fontFamily: '-apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif' }}>
+    <div style={{ 
+      background: 'linear-gradient(180deg, #d4f7e6 0%, #bbf7d0 50%, #a7f3d0 100%)', 
+      minHeight: '100vh', 
+      fontFamily: '-apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif',
+      paddingBottom: '40px'
+    }}>
 
-      {/* Navbar Layout Structure */}
-      <nav style={{ background: 'white', display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: '16px 40px', borderBottom: '1px solid #e5e5e5' }}>
-        <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
-          <span style={{ background: '#1D9E75', color: 'white', width: '32px', height: '32px', borderRadius: '8px', display: 'flex', alignItems: 'center', justifyContent: 'center', fontWeight: 700 }}>F</span>
-          <span style={{ fontWeight: 700, color: '#111', fontSize: '16px' }}>FreelanceShield</span>
-        </div>
-        <div style={{ display: 'flex', gap: '12px', alignItems: 'center' }}>
-          <Link href="/dashboard" style={{ textDecoration: 'none' }}>
-            <span style={{ color: '#666', fontSize: '14px', fontWeight: 500, cursor: 'pointer' }}>Dashboard</span>
+      {/* Floating Glassmorphism Navbar Layer */}
+      <div style={{ padding: '16px 20px', zIndex: 1000 }}>
+        <nav style={{
+          background: 'rgba(255, 255, 255, 0.7)',
+          backdropFilter: 'blur(16px)',
+          WebkitBackdropFilter: 'blur(16px)',
+          display: 'flex',
+          justifyContent: 'space-between',
+          alignItems: 'center',
+          padding: '12px 32px',
+          borderRadius: '16px',
+          border: '1px solid rgba(0, 0, 0, 0.08)',
+          boxShadow: '0 8px 32px rgba(29, 158, 117, 0.08)',
+          maxWidth: '1200px',
+          margin: '0 auto'
+        }}>
+          <Link href="/" style={{ textDecoration: 'none' }} className="brand-logo-container">
+            <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
+              <span className="logo-box" style={{
+                background: '#1D9E75', color: 'white', width: '32px', height: '32px',
+                borderRadius: '8px', display: 'flex', alignItems: 'center',
+                justifyContent: 'center', fontWeight: 700, fontSize: '15px',
+                transition: 'all 0.2s ease'
+              }}>F</span>
+              <span className="brand-text" style={{ 
+                fontWeight: 700, color: '#111827', fontSize: '18px', 
+                letterSpacing: '-0.02em', transition: 'all 0.2s ease' 
+              }}>FreelanceShield</span>
+            </div>
           </Link>
-          <Link href="/create">
-            <button style={{ background: '#1D9E75', color: 'white', border: 'none', padding: '10px 20px', borderRadius: '8px', cursor: 'pointer', fontWeight: 600, fontSize: '14px' }}>
-              New Project
-            </button>
-          </Link>
-        </div>
-      </nav>
+          <div style={{ display: 'flex', gap: '24px', alignItems: 'center' }} className="desktop-nav-menu">
+            <Link href="/dashboard" style={{ textDecoration: 'none' }} className="nav-item">
+              <span className="nav-text">Dashboard</span>
+            </Link>
+            <Link href="/create" style={{ textDecoration: 'none', position: 'relative', paddingBottom: '4px' }} className="nav-item active-link">
+              <span className="nav-text" style={{ color: '#111827' }}>New Project</span>
+              <div style={{ position: 'absolute', bottom: 0, left: 0, right: 0, height: '2.5px', background: '#1D9E75', borderRadius: '2px' }} />
+            </Link>
+          </div>
+        </nav>
+      </div>
 
-      <div style={{ maxWidth: '680px', margin: '32px auto', padding: '0 20px' }}>
+      <div style={{ maxWidth: '680px', margin: '20px auto', padding: '0 20px' }}>
 
-        <h2 style={{ margin: '0 0 6px', fontSize: '28px', fontWeight: 800, color: '#111', letterSpacing: '-0.02em' }}>Create a new project</h2>
-        <p style={{ margin: '0 0 28px', color: '#666', fontSize: '14px' }}>Define milestones and we'll generate a secure payment link for your client.</p>
+        <h2 style={{ margin: '0 0 6px', fontSize: '32px', fontWeight: 800, color: '#111827', letterSpacing: '-0.02em' }}>Create a new project</h2>
+        <p style={{ margin: '0 0 28px', color: '#273142', fontSize: '14px', fontWeight: 600 }}>Define milestones and we'll generate a secure payment link for your client.</p>
 
         {/* Form Context Info Container Block */}
-        <div style={{ background: 'white', border: '1px solid #e5e5e5', borderRadius: '12px', padding: '24px', marginBottom: '16px', boxShadow: '0 1px 3px rgba(0,0,0,0.01)' }}>
-          <h3 style={{ margin: '0 0 20px', fontSize: '15px', fontWeight: 700, color: '#111' }}>Project details</h3>
+        <div style={cardStyle}>
+          <h3 style={{ margin: '0 0 20px', fontSize: '15px', fontWeight: 700, color: '#111827' }}>Project details</h3>
 
-          <label style={{ fontSize: '13px', color: '#555', fontWeight: 600 }}>Project title *</label>
+          <label style={labelStyle}>Project title *</label>
           <input name="title" value={form.title} onChange={handleForm}
             placeholder="e.g. E-commerce Website Redesign"
             style={inputStyle} />
 
-          <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '12px', marginTop: '12px' }}>
+          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(200px, 1fr))', gap: '12px', marginTop: '12px' }}>
             <div>
-              <label style={{ fontSize: '13px', color: '#555', fontWeight: 600 }}>Client name *</label>
+              <label style={labelStyle}>Client name *</label>
               <input name="client_name" value={form.client_name} onChange={handleForm}
                 placeholder="Kavya Mehta"
                 style={inputStyle} />
             </div>
             <div>
-              <label style={{ fontSize: '13px', color: '#555', fontWeight: 600 }}>Client email *</label>
+              <label style={labelStyle}>Client email *</label>
               <input name="client_email" type="email" value={form.client_email} onChange={handleForm}
                 onBlur={(e) => validateEmailFormat(e.target.value)}
                 placeholder="kavya@company.com"
                 style={{
                   ...inputStyle,
-                  border: emailError ? '1px solid #e74c3c' : '1px solid #d1d5db',
+                  border: emailError ? '1px solid #e74c3c' : '1px solid rgba(0, 0, 0, 0.08)',
                   backgroundColor: emailError ? '#fff5f5' : 'white'
                 }} />
               {emailError && (
@@ -300,13 +330,13 @@ export default function CreateProject() {
           </div>
 
           <div style={{ marginTop: '12px' }}>
-            <label style={{ fontSize: '13px', color: '#555', fontWeight: 600 }}>Client WhatsApp number</label>
+            <label style={labelStyle}>Client WhatsApp number</label>
             <input name="client_phone" value={form.client_phone} onChange={handleForm}
               onBlur={(e) => validatePhoneFormat(e.target.value)}
               placeholder="e.g. 9876543210 (Max 10 digits)"
               style={{
                 ...inputStyle,
-                border: phoneError ? '1px solid #e74c3c' : '1px solid #d1d5db',
+                border: phoneError ? '1px solid #e74c3c' : '1px solid rgba(0, 0, 0, 0.08)',
                 backgroundColor: phoneError ? '#fff5f5' : 'white'
               }} />
             {phoneError && (
@@ -318,23 +348,23 @@ export default function CreateProject() {
         </div>
 
         {/* Milestones Setup Pipeline Wrapper */}
-        <div style={{ background: 'white', border: '1px solid #e5e5e5', borderRadius: '12px', padding: '24px', marginBottom: '16px', boxShadow: '0 1px 3px rgba(0,0,0,0.01)' }}>
+        <div style={cardStyle}>
           <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '20px' }}>
-            <h3 style={{ margin: 0, fontSize: '15px', fontWeight: 700, color: '#111' }}>Milestones</h3>
+            <h3 style={{ margin: 0, fontSize: '15px', fontWeight: 700, color: '#111827' }}>Milestones</h3>
             <button onClick={addMilestone}
-              style={{ background: 'white', border: '1px solid #d1d5db', color: '#111', padding: '6px 14px', borderRadius: '8px', cursor: 'pointer', fontSize: '13px', fontWeight: 600 }}>
+              style={{ background: 'white', border: '1px solid rgba(0, 0, 0, 0.08)', color: '#111827', padding: '6px 14px', borderRadius: '8px', cursor: 'pointer', fontSize: '13px', fontWeight: 600 }}>
               + Add Milestone
             </button>
           </div>
 
           {milestones.map((m, index) => (
-            <div key={m.id} style={{ background: '#f9fafb', border: '1px solid #e5e7eb', borderRadius: '10px', padding: '16px', marginBottom: '12px' }}>
+            <div key={m.id} style={{ background: 'rgba(255, 255, 255, 0.4)', border: '1px solid rgba(0, 0, 0, 0.06)', borderRadius: '10px', padding: '16px', marginBottom: '12px' }}>
               <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '12px' }}>
                 <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
                   <span style={{ background: '#1D9E75', color: 'white', width: '24px', height: '24px', borderRadius: '50%', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '12px', fontWeight: 700 }}>
                     {index + 1}
                   </span>
-                  <span style={{ fontWeight: 600, fontSize: '14px', color: '#111' }}>Milestone {index + 1}</span>
+                  <span style={{ fontWeight: 600, fontSize: '14px', color: '#111827' }}>Milestone {index + 1}</span>
                 </div>
                 {milestones.length > 1 && (
                   <button onClick={() => removeMilestone(m.id)}
@@ -344,30 +374,29 @@ export default function CreateProject() {
                 )}
               </div>
 
-              <label style={{ fontSize: '12px', color: '#666', fontWeight: 600 }}>Title *</label>
+              <label style={{ fontSize: '12px', color: '#374151', fontWeight: 600 }}>Title *</label>
               <input value={m.title} onChange={e => handleMilestone(m.id, 'title', e.target.value)}
                 placeholder="e.g. Design mockups"
                 style={{ ...inputStyle, fontSize: '13px' }} />
 
-              <label style={{ fontSize: '12px', color: '#666', fontWeight: 600, marginTop: '8px', display: 'block' }}>Description</label>
+              <label style={{ fontSize: '12px', color: '#374151', fontWeight: 600, marginTop: '8px', display: 'block' }}>Description</label>
               <textarea value={m.description} onChange={e => handleMilestone(m.id, 'description', e.target.value)}
                 placeholder="What will be delivered?"
                 rows={2}
-                style={{ ...inputStyle, fontSize: '13px', resize: 'vertical' }} />
+                style={{ ...inputStyle, fontSize: '13px', resize: 'vertical', fontFamily: 'sans-serif' }} />
 
               <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '12px', marginTop: '8px' }}>
                 <div>
-                  <label style={{ fontSize: '12px', color: '#666', fontWeight: 600 }}>Amount (₹) *</label>
-                  {/* Changed type to text to cleanly manage custom character regex filters */}
+                  <label style={{ fontSize: '12px', color: '#374151', fontWeight: 600 }}>Amount (₹) *</label>
                   <input type="text" value={m.amount} onChange={e => handleMilestone(m.id, 'amount', e.target.value)}
                     placeholder="Min 500"
                     style={{ ...inputStyle, fontSize: '13px' }} />
                 </div>
                 <div>
-                  <label style={{ fontSize: '12px', color: '#666', fontWeight: 600 }}>Due date</label>
+                  <label style={{ fontSize: '12px', color: '#374151', fontWeight: 600 }}>Due date</label>
                   <input type="date" value={m.due} onChange={e => handleMilestone(m.id, 'due', e.target.value)}
                     min={index > 0 ? milestones[index - 1].due : ''}
-                    style={{ ...inputStyle, fontSize: '13px' }} />
+                    style={{ ...inputStyle, fontSize: '13px', color: '#111827' }} />
                 </div>
               </div>
             </div>
@@ -375,39 +404,102 @@ export default function CreateProject() {
         </div>
 
         {/* Project Ledger Financial Summary */}
-        <div style={{ background: 'white', border: '1px solid #e5e5e5', borderRadius: '12px', padding: '20px', marginBottom: '20px', boxShadow: '0 1px 3px rgba(0,0,0,0.01)' }}>
+        <div style={{ background: 'rgba(255, 255, 255, 0.6)', backdropFilter: 'blur(10px)', border: '1px solid rgba(0, 0, 0, 0.08)', borderRadius: '12px', padding: '20px', marginBottom: '20px', boxShadow: '0 1px 3px rgba(0,0,0,0.01)' }}>
           <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '8px' }}>
-            <span style={{ color: '#666', fontSize: '14px', fontWeight: 500 }}>Project subtotal</span>
-            <span style={{ color: '#111', fontWeight: 600 }}>₹{total.toLocaleString('en-IN')}</span>
+            <span style={{ color: '#374151', fontSize: '14px', fontWeight: 500 }}>Project subtotal</span>
+            <span style={{ color: '#111827', fontWeight: 600 }}>₹{total.toLocaleString('en-IN')}</span>
           </div>
           <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '12px' }}>
-            <span style={{ color: '#666', fontSize: '14px', fontWeight: 500 }}>FreelanceShield fee (5%)</span>
-            <span style={{ color: '#666', fontWeight: 500 }}>₹{fee.toLocaleString('en-IN')}</span>
+            <span style={{ color: '#374151', fontSize: '14px', fontWeight: 500 }}>FreelanceShield fee (5%)</span>
+            <span style={{ color: '#4b5563', fontWeight: 500 }}>₹{fee.toLocaleString('en-IN')}</span>
           </div>
-          <div style={{ borderTop: '1px solid #e5e5e5', paddingTop: '12px', display: 'flex', justifyContent: 'space-between' }}>
-            <span style={{ fontWeight: 700, color: '#111' }}>Total project amount</span>
-            <span style={{ fontWeight: 800, color: '#111', fontSize: '18px' }}>₹{total.toLocaleString('en-IN')}</span>
+          <div style={{ borderTop: '1px solid rgba(0, 0, 0, 0.08)', paddingTop: '12px', display: 'flex', justifyContent: 'space-between' }}>
+            <span style={{ fontWeight: 700, color: '#111827' }}>Total project amount</span>
+            <span style={{ fontWeight: 800, color: '#111827', fontSize: '18px' }}>₹{total.toLocaleString('en-IN')}</span>
           </div>
         </div>
 
         {/* Submit Action Interface Link Generator Button */}
         <button onClick={handleSubmit} disabled={loading}
-          style={{ width: '100%', padding: '16px', background: '#111', color: 'white', border: 'none', borderRadius: '10px', fontSize: '15px', fontWeight: 600, cursor: loading ? 'not-allowed' : 'pointer', opacity: loading ? 0.7 : 1, boxShadow: '0 4px 12px rgba(0,0,0,0.1)' }}>
+          style={{ width: '100%', padding: '16px', background: '#111827', color: 'white', border: 'none', borderRadius: '10px', fontSize: '15px', fontWeight: 600, cursor: loading ? 'not-allowed' : 'pointer', opacity: loading ? 0.7 : 1, boxShadow: '0 4px 12px rgba(0,0,0,0.1)' }}>
           {loading ? 'Creating project...' : '🔗 Generate Payment Link'}
         </button>
 
       </div>
+
+      {/* Global CSS Injector Module */}
+      <style jsx global>{`
+        .brand-logo-container:active .logo-box {
+          transform: scale(0.95);
+          box-shadow: 0 0 20px rgba(29, 158, 117, 0.9), 0 0 30px rgba(29, 158, 117, 0.5);
+          background: #111827 !important;
+        }
+        .brand-logo-container:active .brand-text {
+          color: #1D9E75 !important;
+          text-shadow: 0 0 15px rgba(29, 158, 117, 0.6);
+        }
+        .brand-logo-container:hover .brand-text {
+          color: #1D9E75;
+        }
+
+        .nav-item {
+          transition: all 0.25s ease;
+          position: relative;
+        }
+        .nav-text {
+          color: #4b5563;
+          font-size: 14px;
+          font-weight: 600;
+          cursor: pointer;
+          transition: all 0.25s ease;
+        }
+        .nav-item:hover .nav-text {
+          color: #1D9E75 !important;
+          text-shadow: 0 0 10px rgba(29, 158, 117, 0.4);
+        }
+        .nav-item:hover::after {
+          content: '';
+          position: absolute;
+          bottom: 0;
+          left: 0;
+          right: 0;
+          height: 2px;
+          background: rgba(29, 158, 117, 0.6);
+          border-radius: 2px;
+          box-shadow: 0 0 8px rgba(29, 158, 117, 0.5);
+        }
+        
+        @media (max-width: 768px) {
+          .desktop-nav-menu { display: none !important; }
+        }
+      `}</style>
+      <Footer />
     </div>
   )
+}
+
+const cardStyle = {
+  background: 'rgba(255, 255, 255, 0.6)',
+  backdropFilter: 'blur(10px)',
+  border: '1px solid rgba(0, 0, 0, 0.08)',
+  borderRadius: '12px',
+  padding: '24px',
+  marginBottom: '16px'
+}
+
+const labelStyle = {
+  fontSize: '13px',
+  color: '#374151',
+  fontWeight: 600
 }
 
 const inputStyle = {
   width: '100%',
   padding: '11px 14px',
   borderRadius: '8px',
-  border: '1px solid #d1d5db',
+  border: '1px solid rgba(0, 0, 0, 0.08)',
   background: 'white',
-  color: '#111',
+  color: '#111827',
   fontSize: '14px',
   marginTop: '4px',
   boxSizing: 'border-box',

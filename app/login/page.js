@@ -54,7 +54,7 @@ export default function Login() {
     }}>
 
       {/* Floating Glassmorphism Navbar Layer (Symmetrically matched to image_806c3f.png Specs) */}
-      <div style={{ padding: '16px 20px', position: 'sticky', top: 0, zIndex: 1000 }}>
+      <div style={{ padding: '16px 20px', zIndex: 1000 }}>
         <nav style={{
           background: 'rgba(255, 255, 255, 0.7)',
           backdropFilter: 'blur(16px)',
@@ -90,9 +90,7 @@ export default function Login() {
             <Link href="/" style={{ textDecoration: 'none', position: 'relative', paddingBottom: '4px' }} className="nav-item">
               <span className="nav-text">Home</span>
             </Link>
-            <Link href="/settings" style={{ textDecoration: 'none', position: 'relative', paddingBottom: '4px' }} className="nav-item">
-              <span className="nav-text">Settings</span>
-            </Link>
+           
           </div>
         </nav>
       </div>
@@ -115,7 +113,7 @@ export default function Login() {
             {isSignUp ? 'Create account' : 'Welcome back'}
           </h2>
           <p style={{ margin: '0 0 24px', color: '#374151', fontSize: '14px', fontWeight: 500 }}>
-            {isSignUp ? 'Start protecting your payments framework' : 'Sign in to your Escrow protection control vault'}
+            {isSignUp ? 'Start protecting your payments framework' : 'Sign in to your FreelanceShield account'}
           </p>
 
           {/* OAuth Google Interface Access Button Trigger */}
