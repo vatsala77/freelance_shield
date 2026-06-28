@@ -1,36 +1,205 @@
-This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-app`](https://github.com/vercel/next.js/tree/canary/packages/create-next-app).
+# FreelanceShield 🛡️
 
-## Getting Started
+> India's first milestone-based escrow platform for freelancers. Get paid. Every time.
 
-First, run the development server:
+[![Live Demo](https://img.shields.io/badge/Live%20Demo-Visit%20Site-1D9E75?style=for-the-badge&logo=vercel)](https://freelance-shield-sable.vercel.app/)
+
+
+---
+
+## 🚨 The Problem
+
+**8 crore Indian freelancers. Average wait: 47 days to get paid for work already delivered.**
+
+- Client pays partial advance → takes the work → disappears
+- No legal recourse, no protection, no Indian solution exists
+- Deals happen on WhatsApp, payments on UPI, everything runs on blind trust
+- When that trust breaks — the freelancer loses everything
+
+---
+
+## ✅ The Solution
+
+FreelanceShield is a **trust platform** — not just a payment tool.
+
+```
+Freelancer creates project with milestones
+              ↓
+Client pays upfront — money locks in Razorpay escrow
+              ↓
+Freelancer delivers work + submits proof
+              ↓
+Client approves → money releases instantly
+              ↓
+If client ghosts → dispute raised → admin reviews → refund processed
+```
+
+---
+
+## 🌐 Live Demo
+
+🔗 **[https://freelance-shield-sable.vercel.app/](https://freelance-shield-sable.vercel.app/)**
+
+| Role | Flow |
+|------|------|
+| **Freelancer** | Sign up → Create project → Share payment link → Submit work → Get paid |
+| **Client** | Open link → Pay via UPI/Card → Review work → Approve & release |
+
+---
+
+## ✨ Features
+
+### 🔐 Auth & Onboarding
+- Email + Password signup/login via NextAuth + Supabase
+- Bank details onboarding for Razorpay linked account
+- Session-based freelancer/client view switching on pay page
+
+### 📋 Freelancer Dashboard
+- Real-time project list with milestone progress bars
+- Project detail page with payment link copy + WhatsApp share
+- Work submission with proof link per milestone
+- Search and filter projects by status
+
+### 💳 Client Payment Page
+- No login required — just open the payment link
+- Secure Razorpay checkout (UPI, Cards, Netbanking, EMI)
+- Approve & Release button
+- Request Changes option
+- Raise Dispute with admin email notification
+- Live activity feed (real-time updates)
+- PDF receipt download
+- "How it works" protection guide
+
+### 🛡️ Trust & Compliance
+- RBI-compliant escrow via Razorpay Route
+- Terms & Conditions page
+- Refund Policy page
+- Dispute email notification to admin via Resend
+- Email notifications on payment received and work submitted
+
+---
+
+## 🛠️ Tech Stack
+
+| Layer | Technology |
+|-------|-----------|
+| **Frontend + Backend** | Next.js 16 (App Router, API Routes) |
+| **Database** | Supabase (PostgreSQL) |
+| **Auth** | NextAuth.js + Supabase Auth |
+| **Payments** | Razorpay Route (Escrow) |
+| **Email** | Resend |
+| **PDF** | jsPDF + html2canvas |
+| **Deployment** | Vercel |
+
+---
+
+## 🗄️ Database Schema
+
+**Milestone Status Flow:**
+
+```
+pending → funded → submitted → approved → released
+                      ↓
+              changes_requested
+                      ↓
+                   disputed
+```
+
+**Core Tables:**
+- `profiles` — Freelancer accounts + Razorpay linked account
+- `projects` — Project details + unique invite_token
+- `milestones` — Full milestone lifecycle
+- `platform_fees` — Fee tracking per milestone
+- `disputes` — Dispute records
+- `notifications` — Email/notification logs
+
+---
+
+## 🚀 Getting Started
+
+### Prerequisites
+- Node.js 18+
+- Supabase account
+- Razorpay account (Route enabled)
+- Resend account
+
+### Installation
+
+```bash
+git clone https://github.com/YOUR_USERNAME/freelanceshield.git
+cd freelanceshield
+npm install
+```
+
+### Environment Variables
+
+Create `.env.local`:
+
+```env
+NEXT_PUBLIC_SUPABASE_URL=your_supabase_url
+NEXT_PUBLIC_SUPABASE_ANON_KEY=your_anon_key
+SUPABASE_SERVICE_ROLE_KEY=your_service_role_key
+NEXTAUTH_URL=http://localhost:3000
+NEXTAUTH_SECRET=your_random_secret
+NEXT_PUBLIC_RAZORPAY_KEY_ID=rzp_test_xxxx
+RAZORPAY_KEY_SECRET=your_key_secret
+RESEND_API_KEY=re_xxxx
+ADMIN_EMAIL=your@email.com
+```
+
+### Database Setup
+
+Run `schema_v2.sql` in Supabase SQL Editor.
+
+### Run Dev Server
 
 ```bash
 npm run dev
-# or
-yarn dev
-# or
-pnpm dev
-# or
-bun dev
 ```
 
-Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
+---
 
-You can start editing the page by modifying `app/page.js`. The page auto-updates as you edit the file.
+## 💰 Pricing
 
-This project uses [`next/font`](https://nextjs.org/docs/app/building-your-application/optimizing/fonts) to automatically optimize and load [Geist](https://vercel.com/font), a new font family for Vercel.
+| Fee | Amount |
+|-----|--------|
+| 🎉 FreelanceShield Platform Fee | **₹0 — Beta Period** |
+| Razorpay Gateway (UPI, Debit, Credit, Netbanking) | 2% + 18% GST |
+| Razorpay Gateway (EMI, Amex, BNPL) | 3% + 18% GST |
 
-## Learn More
+> Zero platform fee during beta. Only standard Razorpay gateway charges apply.
 
-To learn more about Next.js, take a look at the following resources:
+---
 
-- [Next.js Documentation](https://nextjs.org/docs) - learn about Next.js features and API.
-- [Learn Next.js](https://nextjs.org/learn) - an interactive Next.js tutorial.
+## 🗺️ Roadmap
 
-You can check out [the Next.js GitHub repository](https://github.com/vercel/next.js) - your feedback and contributions are welcome!
+### ✅ Live Now
+- Milestone-based escrow flow
+- Dispute resolution + admin email alerts
+- PDF receipt download
+- Work submission + approval flow
+- Email notifications
 
-## Deploy on Vercel
+### 🔜 Coming Soon
+- 📄 PDF Work Agreement auto-generation
+- ⏰ 7-day auto-reminder (Vercel Cron)
+- 🤖 AI milestone auto-generator
+- 📊 Freelancer expense dashboard
+- ⭐ Client trust score
+- 💎 Pro plan — ₹99-199/month
+- 💸 2% platform fee post-beta
 
-The easiest way to deploy your Next.js app is to use the [Vercel Platform](https://vercel.com/new?utm_medium=default-template&filter=next.js&utm_source=create-next-app&utm_campaign=create-next-app-readme) from the creators of Next.js.
+---
 
-Check out our [Next.js deployment documentation](https://nextjs.org/docs/app/building-your-application/deploying) for more details.
+## 👩‍💻 About the Builder
+
+Built by **Vatsala Sahu** — 3rd year B.Tech CSE, AKTU 🎓
+
+- 🏅 AWS Certified Cloud Practitioner
+- 🏅 AWS Certified Data Engineer – Associate
+- 🚀 Solo founder — idea sourced from Razorpay's own Fix My Itch initiative
+- ⚡ Razorpay Route approved same day of application
+
+📧 vatsalasahu77@gmail.com
+
+---
