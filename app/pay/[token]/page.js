@@ -325,7 +325,7 @@ export default function PayPage() {
         </div>
       )}
 
-      {/* Static Glassmorphism Navbar Layer (CRITICAL FIX: Sticky behavior removed so it stays at the top of the page) */}
+      {/* Static Glassmorphism Navbar Layer */}
       <div style={{ padding: '16px 20px', zIndex: 1000 }}>
         <nav style={{
           background: 'rgba(255, 255, 255, 0.7)',
@@ -413,6 +413,21 @@ export default function PayPage() {
             </div>
           </div>
 
+          {/* DYNAMIC TRUST BANNER FOR HIGHLIGHTING BETA NOTE */}
+          <div style={{ 
+            background: '#fef2f2', 
+            borderRadius: '12px', 
+            padding: '16px 20px', 
+            textAlign: 'center', 
+            border: '1px solid #fca5a5',
+            marginTop: '4px',
+            boxShadow: '0 2px 8px rgba(239, 68, 68, 0.04)'
+          }}>
+            <p style={{ margin: 0, fontSize: '13px', color: '#991b1b', lineHeight: 1.6, fontWeight: 500 }}>
+              FreelanceShield charges <strong style={{ color: '#1D9E75', fontWeight: 700 }}>zero platform fee</strong> during beta. Only Razorpay's standard gateway charges apply — which are completely outside our control. 
+            </p>
+          </div>
+
           <h3 style={{ margin: '12px 0 4px', fontSize: '13px', fontWeight: 600, color: '#888', textTransform: 'uppercase' }}>MILESTONES</h3>
 
           {/* Milestone Loop Matrix */}
@@ -435,11 +450,6 @@ export default function PayPage() {
                     {m.due_date && `📅 Due ${new Date(m.due_date).toLocaleDateString('en-IN', { day: 'numeric', month: 'short', year: 'numeric' })} · `}
                     <strong style={{ color: '#111' }}>₹{(m.amount_paise / 100).toLocaleString('en-IN')}</strong>
                   </p>
-                  {isFreelancer && m.freelancer_payout_paise && (
-                    <p style={{ margin: '4px 0 0', color: '#1D9E75', fontSize: '12px', fontWeight: 500 }}>
-                      You'll receive ₹{(m.freelancer_payout_paise / 100).toLocaleString('en-IN')} (after 5% platform fee)
-                    </p>
-                  )}
                   {m.status === 'changes_requested' && m.change_request_note && (
                     <p style={{ margin: '8px 0 0', color: '#e74c3c', fontSize: '13px', background: '#fdeeee', padding: '8px 12px', borderRadius: '6px' }}>
                       💬 {m.change_request_note}
@@ -550,7 +560,7 @@ export default function PayPage() {
           )}
         </div>
 
-        {/* Right Side Sidebar Panel (Scrollable and layout bounded height node) */}
+        {/* Right Side Sidebar Panel */}
         <div className="sidebar-activity-slot">
           <div style={{ 
             background: 'rgba(255, 255, 255, 0.6)', 
@@ -593,23 +603,26 @@ export default function PayPage() {
         </div>
       </div>
 
-      {/* NEW UPDATED DIV FOR THE TERMS AND CONDITION REFUND POLICY */}
-      <div style={{ maxWidth: '1000px', margin: '24px auto 0', padding: '0 20px' }}>
-        <div style={{
-          background: 'rgba(255, 255, 255, 0.45)',
-          backdropFilter: 'blur(10px)',
-          border: '1px solid rgba(0, 0, 0, 0.08)',
-          borderRadius: '14px',
-          padding: '20px 32px',
-          display: 'flex',
-          justifyContent: 'center',
-          gap: '24px',
-          flexWrap: 'wrap'
-        }}>
-          <a href="/terms" style={{ color: '#4b5563', fontSize: '13px', fontWeight: 600, textDecoration: 'none' }} className="footer-anchor">Terms & Conditions</a>
-          <a href="/refund-policy" style={{ color: '#4b5563', fontSize: '13px', fontWeight: 600, textDecoration: 'none' }} className="footer-anchor">Refund Policy</a>
-        </div>
-      </div>
+      {/* FOOTER LINKS */}
+    {/* TERMS AND CONDITION REFUND POLICY - FULL PAGE WIDTH */}
+<div style={{ width: '100%', marginTop: '24px' }}>
+  <div style={{
+    background: 'rgba(255, 255, 255, 0.45)',
+    backdropFilter: 'blur(10px)',
+    borderTop: '1px solid rgba(0, 0, 0, 0.08)',    // Poore page par top border clean lagegi
+    borderBottom: '1px solid rgba(0, 0, 0, 0.08)', // Bottom border
+    padding: '20px 32px',
+    display: 'flex',
+    justifyContent: 'center',
+    gap: '24px',
+    flexWrap: 'wrap',
+    width: '100%',
+    boxSizing: 'border-box' // Padding layout ko screen se bahar stretch nahi karne dega
+  }}>
+    <a href="/terms" style={{ color: '#4b5563', fontSize: '13px', fontWeight: 600, textDecoration: 'none' }} className="footer-anchor">Terms & Conditions</a>
+    <a href="/refund-policy" style={{ color: '#4b5563', fontSize: '13px', fontWeight: 600, textDecoration: 'none' }} className="footer-anchor">Refund Policy</a>
+  </div>
+</div>
 
       {/* CONTAINER MODAL WINDOW: REVISIONS NOTES DISPATCH INTERFACE */}
       {requestChangeFor && (

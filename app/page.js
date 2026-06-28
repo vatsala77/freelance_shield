@@ -127,128 +127,136 @@ export default function Home() {
           </div>
         )}
       </div>
-{/* Hero Section Container with Enhanced Image Backdrop Setup */}
-<section style={{ 
-  maxWidth: '960px', 
-  margin: '40px auto', 
-  padding: '80px 40px', 
-  textAlign: 'center',
-  
-  // 1. Image Path integration with matching fallback ambient gradients
-  backgroundImage: `
-    linear-gradient(135deg, rgba(212, 247, 230, 0.85) 0%, rgba(255, 255, 255, 0.75) 100%), 
-    url('/hero-bg.jpeg')
-  `,
-  
-  // 2. Core Image alignment and background constraints mapping
-  backgroundSize: 'cover',
-  backgroundPosition: 'center',
-  backgroundRepeat: 'no-repeat',
-  
-  // 3. Glassmorphic text separation layer standard
-  backdropFilter: 'blur(12px)',
-  WebkitBackdropFilter: 'blur(12px)',
-  borderRadius: '24px',
-  border: '1px solid rgba(0, 0, 0, 0.08)',
-  boxShadow: '0 12px 40px rgba(29, 158, 117, 0.04)'
-}}>
-  
-  {/* RBI Badge Node */}
-  <div style={{ 
-    display: 'inline-block', 
-    background: 'white', 
-    color: '#1D9E75', 
-    padding: '6px 16px', 
-    borderRadius: '20px', 
-    fontSize: '13px', 
-    fontWeight: 600, 
-    marginBottom: '24px',
-    boxShadow: '0 2px 6px rgba(0,0,0,0.02)',
-    border: '1px solid rgba(29, 158, 117, 0.2)'
-  }}>
-    🛡️ RBI Compliant Escrow Infrastructure
-  </div>
 
-  {/* Main Header Signature Font */}
-  <h1 style={{ 
-    fontSize: 'clamp(32px, 7vw, 58px)', 
-    fontWeight: 800, 
-    color: '#111827', 
-    margin: '0 0 20px', 
-    lineHeight: 1.12, 
-    letterSpacing: '-0.03em' 
-  }}>
-    Get Paid. <span style={{ color: '#1D9E75' }}>Every Single Time.</span>
-  </h1>
-
-  {/* Subtitle Description (Wrapped in glass text background for perfect contrast readability) */}
-  <p style={{ 
-    fontSize: 'clamp(15px, 2.5vw, 19px)', 
-    color: '#111827', 
-    maxWidth: '560px', 
-    margin: '0 auto 36px', 
-    lineHeight: 1.6, 
-    letterSpacing: '-0.01em',
-    fontWeight: 600,
-    background: 'rgba(255, 255, 255, 0.4)',
-    padding: '8px 16px',
-    borderRadius: '12px',
-    display: 'inline-block'
-  }}>
-    Client money locks securely upfront in escrow. Funds land directly in your bank account immediately after milestone approval. 2% fee. No drama.
-  </p>
-
-  {/* Action Redirect Controls Trigger Clusters */}
-  <div style={{ display: 'flex', gap: '14px', justifyContent: 'center', flexWrap: 'wrap', marginBottom: '28px' }}>
-    <Link href={isLoggedIn ? "/dashboard" : "/login"} style={{ textDecoration: 'none' }}>
-      <button style={{ 
-        background: '#1D9E75', 
-        color: 'white', 
-        border: 'none', 
-        padding: '14px 36px', 
-        borderRadius: '8px', 
-        cursor: 'pointer', 
-        fontWeight: 600, 
-        fontSize: '16px', 
-        boxShadow: '0 4px 14px rgba(29,158,117,0.3)',
-        transition: 'all 0.2s'
+      {/* Hero Section */}
+      <section style={{ 
+        maxWidth: '960px', 
+        margin: '40px auto', 
+        padding: '80px 40px', 
+        textAlign: 'center',
+        backgroundImage: `
+          linear-gradient(135deg, rgba(212, 247, 230, 0.85) 0%, rgba(255, 255, 255, 0.75) 100%), 
+          url('/hero-bg.jpeg')
+        `,
+        backgroundSize: 'cover',
+        backgroundPosition: 'center',
+        backgroundRepeat: 'no-repeat',
+        backdropFilter: 'blur(12px)',
+        WebkitBackdropFilter: 'blur(12px)',
+        borderRadius: '24px',
+        border: '1px solid rgba(0, 0, 0, 0.08)',
+        boxShadow: '0 12px 40px rgba(29, 158, 117, 0.04)'
       }}>
-        {isLoggedIn ? "Go to Dashboard →" : "Get Started Now"}
-      </button>
-    </Link>
-    
-    <a href="#how" style={{ textDecoration: 'none' }}>
-      <button style={{ 
-        background: 'white', 
-        color: '#111827', 
-        border: '1px solid rgba(0, 0, 0, 0.08)', 
-        padding: '14px 36px', 
-        borderRadius: '8px', 
-        cursor: 'pointer', 
-        fontWeight: 600, 
-        fontSize: '16px',
-        boxShadow: '0 2px 4px rgba(0,0,0,0.02)'
-      }}>
-        See how it works
-      </button>
-    </a>
-  </div>
+        
+        {/* Beta Banner */}
+        <div style={{
+          display: 'inline-block',
+          background: '#fff8e1',
+          border: '1px solid #f59e0b',
+          color: '#b45309',
+          padding: '8px 20px',
+          borderRadius: '20px',
+          fontSize: '13px',
+          fontWeight: 700,
+          marginBottom: '16px',
+          boxShadow: '0 2px 6px rgba(245, 158, 11, 0.15)'
+        }}>
+          🎉 Beta Launch — Zero platform fee for all transactions
+        </div>
 
-  {/* Security Verification Stamp Node */}
-  <p style={{ 
-    color: '#111827', 
-    fontSize: '13px', 
-    margin: 0, 
-    display: 'flex', 
-    alignItems: 'center', 
-    justifyContent: 'center', 
-    gap: '6px',
-    fontWeight: 700
-  }}>
-    🔒 Powered by Razorpay Route · Secured Transaction Nodes
-  </p>
+        {/* RBI Badge */}
+        <div style={{ marginBottom: '24px' }}>
+          <div style={{ 
+            display: 'inline-block', 
+            background: 'white', 
+            color: '#1D9E75', 
+            padding: '6px 16px', 
+            borderRadius: '20px', 
+            fontSize: '13px', 
+            fontWeight: 600, 
+            boxShadow: '0 2px 6px rgba(0,0,0,0.02)',
+            border: '1px solid rgba(29, 158, 117, 0.2)'
+          }}>
+            🛡️ RBI Compliant Escrow Infrastructure
+          </div>
+        </div>
 
-</section>
+        <h1 style={{ 
+          fontSize: 'clamp(32px, 7vw, 58px)', 
+          fontWeight: 800, 
+          color: '#111827', 
+          margin: '0 0 20px', 
+          lineHeight: 1.12, 
+          letterSpacing: '-0.03em' 
+        }}>
+          Get Paid. <span style={{ color: '#1D9E75' }}>Every Single Time.</span>
+        </h1>
+
+        <p style={{ 
+          fontSize: 'clamp(15px, 2.5vw, 19px)', 
+          color: '#111827', 
+          maxWidth: '560px', 
+          margin: '0 auto 36px', 
+          lineHeight: 1.6, 
+          letterSpacing: '-0.01em',
+          fontWeight: 600,
+          background: 'rgba(255, 255, 255, 0.4)',
+          padding: '8px 16px',
+          borderRadius: '12px',
+          display: 'inline-block'
+        }}>
+          Client money locks securely upfront in escrow. Funds land directly in your bank account after milestone approval. <span style={{ color: '#1D9E75' }}>Zero platform fee during beta.</span>
+        </p>
+
+        <div style={{ display: 'flex', gap: '14px', justifyContent: 'center', flexWrap: 'wrap', marginBottom: '28px' }}>
+          <Link href={isLoggedIn ? "/dashboard" : "/login"} style={{ textDecoration: 'none' }}>
+            <button style={{ 
+              background: '#1D9E75', 
+              color: 'white', 
+              border: 'none', 
+              padding: '14px 36px', 
+              borderRadius: '8px', 
+              cursor: 'pointer', 
+              fontWeight: 600, 
+              fontSize: '16px', 
+              boxShadow: '0 4px 14px rgba(29,158,117,0.3)',
+              transition: 'all 0.2s'
+            }}>
+              {isLoggedIn ? "Go to Dashboard →" : "Get Started — It's Free"}
+            </button>
+          </Link>
+          
+          <a href="#how" style={{ textDecoration: 'none' }}>
+            <button style={{ 
+              background: 'white', 
+              color: '#111827', 
+              border: '1px solid rgba(0, 0, 0, 0.08)', 
+              padding: '14px 36px', 
+              borderRadius: '8px', 
+              cursor: 'pointer', 
+              fontWeight: 600, 
+              fontSize: '16px',
+              boxShadow: '0 2px 4px rgba(0,0,0,0.02)'
+            }}>
+              See how it works
+            </button>
+          </a>
+        </div>
+
+        <p style={{ 
+          color: '#111827', 
+          fontSize: '13px', 
+          margin: 0, 
+          display: 'flex', 
+          alignItems: 'center', 
+          justifyContent: 'center', 
+          gap: '6px',
+          fontWeight: 700
+        }}>
+          🔒 Powered by Razorpay Route · Secured Transaction Nodes
+        </p>
+
+      </section>
 
       {/* How it works section */}
       <section id="how" style={{ maxWidth: '940px', margin: '40px auto', padding: '0 20px' }}>
@@ -268,7 +276,7 @@ export default function Home() {
               { num: '1', title: 'Create the project', desc: 'Define milestones, fixed phase splits, and expected timelines in under 2 minutes.' },
               { num: '2', title: 'Client locks budget', desc: 'Funds move into secure bank-grade escrow the exact moment the client pays.' },
               { num: '3', title: 'Submit proof of work', desc: 'Deliver deliverables and notify the client instantly via automated dashboard routing.' },
-              { num: '4', title: 'Instant settlement', desc: 'Client approves the work output—funds route instantly straight to your bank account.' },
+              { num: '4', title: 'Instant settlement', desc: 'Client approves the work output — funds route instantly straight to your bank account.' },
             ].map(s => (
               <div key={s.num} 
                 style={{ 
@@ -299,13 +307,71 @@ export default function Home() {
         </div>
       </section>
 
+      {/* Pricing Section */}
+      <section style={{ maxWidth: '940px', margin: '0 auto 40px', padding: '0 20px' }}>
+        <div style={{
+          background: 'rgba(255, 255, 255, 0.45)',
+          backdropFilter: 'blur(10px)',
+          border: '1px solid rgba(0, 0, 0, 0.08)',
+          padding: 'clamp(36px, 8vw, 60px) clamp(20px, 5vw, 40px)',
+          borderRadius: '24px'
+        }}>
+          <p style={{ textAlign: 'center', color: '#1D9E75', fontSize: '12px', fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.06em', margin: '0 0 12px' }}>PRICING</p>
+          <h2 style={{ textAlign: 'center', fontSize: 'clamp(24px, 6vw, 36px)', fontWeight: 800, color: '#111827', margin: '0 0 8px', letterSpacing: '-0.02em' }}>
+            Simple & Transparent
+          </h2>
+          <p style={{ textAlign: 'center', color: '#4b5563', fontSize: '14px', margin: '0 0 40px' }}>No surprises. No hidden charges.</p>
+
+          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(260px, 1fr))', gap: '20px' }}>
+
+            {/* FreelanceShield Fee */}
+            <div style={{ background: '#e8f5ef', border: '2px solid #1D9E75', borderRadius: '16px', padding: '28px', textAlign: 'center' }}>
+              <p style={{ margin: '0 0 8px', fontSize: '13px', fontWeight: 700, color: '#1D9E75', textTransform: 'uppercase', letterSpacing: '0.05em' }}>FreelanceShield Fee</p>
+              <p style={{ margin: '0 0 4px', fontSize: '48px', fontWeight: 800, color: '#111827' }}>₹0</p>
+              <p style={{ margin: '0 0 16px', fontSize: '13px', color: '#1D9E75', fontWeight: 600 }}>During Beta Period</p>
+              <div style={{ background: '#fff8e1', border: '1px solid #f59e0b', borderRadius: '8px', padding: '10px 14px', marginBottom: '16px' }}>
+                <p style={{ margin: 0, fontSize: '12px', color: '#b45309', fontWeight: 600 }}>🎉 Zero platform fee for all transactions during beta</p>
+              </div>
+              {[
+                'Milestone-based escrow',
+                'Work submission tracking',
+                'Dispute resolution',
+                'Receipt generation',
+              ].map(f => (
+                <p key={f} style={{ margin: '0 0 8px', fontSize: '13px', color: '#374151', display: 'flex', alignItems: 'center', gap: '8px' }}>
+                  <span style={{ color: '#1D9E75', fontWeight: 700 }}>✓</span> {f}
+                </p>
+              ))}
+            </div>
+
+            {/* Razorpay Gateway Fee */}
+            
+          </div>
+
+          {/* Bottom Note */}
+        
+<div style={{ 
+  marginTop: '24px', 
+  background: '#fef2f2', // Soft red/pinkish background
+  borderRadius: '12px', 
+  padding: '16px 20px', 
+  textAlign: 'center', 
+  border: '1px solid #fca5a5' // Soft red border
+}}>
+  <p style={{ margin: 0, fontSize: '13px', color: '#991b1b', lineHeight: 1.6 }}> {/* Dark red text color for better readability */}
+    FreelanceShield charges <strong style={{ color: '#1D9E75' }}>zero platform fee</strong> during beta. Only Razorpay's standard gateway charges apply — which are completely outside our control. 
+  </p>
+</div>
+        </div>
+      </section>
+
       {/* Stats section */}
       <section style={{ maxWidth: '940px', margin: '0 auto 40px', padding: '0 20px' }}>
         <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(260px, 1fr))', gap: '24px' }}>
           {[
-            { val: '2%', label: 'Flat Platform Fee', sub: 'Completely transparent pricing structure. No monthly plans.' },
+            { val: '₹0', label: 'Platform Fee (Beta)', sub: 'Zero FreelanceShield fee. Only Razorpay gateway charges apply.' },
             { val: '0', label: 'Invoicing Losses', sub: "Eliminate unpaid invoices. The balance is funded upfront." },
-            { val: '100%', label: 'Payment Protection', sub: 'Full accountability with integrated dispute resolution nodes.' },
+            { val: '100%', label: 'Payment Protection', sub: 'Full accountability with integrated dispute resolution.' },
           ].map(s => (
             <div key={s.label} style={{ 
               background: 'rgba(255, 255, 255, 0.55)', 
@@ -325,15 +391,18 @@ export default function Home() {
 
       {/* CTA section */}
       <section style={{ background: '#111827', borderTop: '1px solid rgba(0, 0, 0, 0.15)', padding: 'clamp(50px, 10vw, 80px) 20px', textAlign: 'center' }}>
+        <div style={{ display: 'inline-block', background: '#1D9E75', color: 'white', padding: '6px 16px', borderRadius: '20px', fontSize: '12px', fontWeight: 700, marginBottom: '20px' }}>
+          🎉 Beta — Zero Platform Fee
+        </div>
         <h2 style={{ color: 'white', fontSize: 'clamp(26px, 6vw, 38px)', fontWeight: 800, margin: '0 0 12px', letterSpacing: '-0.02em' }}>Stop chasing invoices.</h2>
-        <p style={{ color: '#9ca3af', fontSize: 'clamp(13px, 3vw, 16px)', margin: '0 0 32px', fontWeight: 500 }}>Deploy your first escrow project agreement layout in under 2 minutes.</p>
+        <p style={{ color: '#9ca3af', fontSize: 'clamp(13px, 3vw, 16px)', margin: '0 0 32px', fontWeight: 500 }}>Deploy your first escrow project in under 2 minutes. Free during beta.</p>
         <Link href={isLoggedIn ? "/dashboard" : "/login"} style={{ textDecoration: 'none' }}>
           <button style={{ background: '#1D9E75', color: 'white', border: 'none', padding: '16px 40px', borderRadius: '8px', cursor: 'pointer', fontWeight: 600, fontSize: 'clamp(14px, 3.5vw, 16px)', marginBottom: '16px', boxShadow: '0 4px 12px rgba(29,158,117,0.2)' }}>
-            {isLoggedIn ? "Go to Dashboard →" : "Create Secure Contract"}
+            {isLoggedIn ? "Go to Dashboard →" : "Get Started — It's Free"}
           </button>
         </Link>
         <div style={{ display: 'flex', justifyContent: 'center', gap: '24px', flexWrap: 'wrap' }}>
-          {['No hidden setup costs', 'No software subscription', 'Cancel milestones anytime'].map(t => (
+          {['Zero platform fee', 'UPI payments free', 'Cancel anytime'].map(t => (
             <span key={t} style={{ color: '#9ca3af', fontSize: 'clamp(11px, 2.8vw, 13px)', fontWeight: 600 }}>✓ {t}</span>
           ))}
         </div>
@@ -352,7 +421,6 @@ export default function Home() {
         .brand-logo-container:hover .brand-text {
           color: #1D9E75;
         }
-
         .nav-item {
           transition: all 0.25s ease;
           position: relative;
@@ -364,7 +432,6 @@ export default function Home() {
           cursor: pointer;
           transition: all 0.25s ease;
         }
-        
         .nav-item:hover .nav-text {
           color: #1D9E75 !important;
           text-shadow: 0 0 10px rgba(29, 158, 117, 0.4);
@@ -380,14 +447,11 @@ export default function Home() {
           border-radius: 2px;
           box-shadow: 0 0 8px rgba(29, 158, 117, 0.5);
         }
-        
         .active-link .nav-text {
           color: #111827 !important;
         }
-        
         .mobile-menu-burger-icon { display: none !important; }
         .mobile-dropdown-panel { display: none !important; }
-        
         @media (max-width: 768px) {
           .desktop-nav-menu { display: none !important; }
           .mobile-menu-burger-icon { display: block !important; }

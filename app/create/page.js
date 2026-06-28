@@ -404,20 +404,36 @@ export default function CreateProject() {
         </div>
 
         {/* Project Ledger Financial Summary */}
-        <div style={{ background: 'rgba(255, 255, 255, 0.6)', backdropFilter: 'blur(10px)', border: '1px solid rgba(0, 0, 0, 0.08)', borderRadius: '12px', padding: '20px', marginBottom: '20px', boxShadow: '0 1px 3px rgba(0,0,0,0.01)' }}>
-          <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '8px' }}>
-            <span style={{ color: '#374151', fontSize: '14px', fontWeight: 500 }}>Project subtotal</span>
-            <span style={{ color: '#111827', fontWeight: 600 }}>₹{total.toLocaleString('en-IN')}</span>
-          </div>
-          <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '12px' }}>
-            <span style={{ color: '#374151', fontSize: '14px', fontWeight: 500 }}>FreelanceShield fee (5%)</span>
-            <span style={{ color: '#4b5563', fontWeight: 500 }}>₹{fee.toLocaleString('en-IN')}</span>
-          </div>
-          <div style={{ borderTop: '1px solid rgba(0, 0, 0, 0.08)', paddingTop: '12px', display: 'flex', justifyContent: 'space-between' }}>
-            <span style={{ fontWeight: 700, color: '#111827' }}>Total project amount</span>
-            <span style={{ fontWeight: 800, color: '#111827', fontSize: '18px' }}>₹{total.toLocaleString('en-IN')}</span>
-          </div>
-        </div>
+      <div style={{ background: 'rgba(255, 255, 255, 0.6)', backdropFilter: 'blur(10px)', border: '1px solid rgba(0, 0, 0, 0.08)', borderRadius: '12px', padding: '20px', marginBottom: '20px', boxShadow: '0 1px 3px rgba(0,0,0,0.01)' }}>
+  {/* Project Subtotal */}
+  <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '8px' }}>
+    <span style={{ color: '#374151', fontSize: '14px', fontWeight: 500 }}>Project subtotal</span>
+    <span style={{ color: '#111827', fontWeight: 600 }}>₹{total.toLocaleString('en-IN')}</span>
+  </div>
+  
+  {/* FreelanceShield Fee & Razorpay Note */}
+  <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: '12px' }}>
+    {/* Left Side: Column Layout for Text and Note */}
+    <div style={{ display: 'flex', flexDirection: 'column', gap: '2px' }}>
+      <span style={{ color: '#374151', fontSize: '14px', fontWeight: 500 }}>
+        FreelanceShield fee (0%) <strong style={{ color: '#1D9E75' }}>Beta-Free</strong>
+      </span>
+      {/* Razorpay Note right underneath */}
+      <span style={{ color: '#6b7280', fontSize: '11px', fontWeight: 400 }}>
+        *Razorpay platform fees applied
+      </span>
+    </div>
+    
+    {/* Right Side: Amount */}
+    <span style={{ color: '#4b5563', fontWeight: 500 }}>₹{fee.toLocaleString('en-IN')}</span>
+  </div>
+  
+  {/* Total Amount */}
+  <div style={{ borderTop: '1px solid rgba(0, 0, 0, 0.08)', paddingTop: '12px', display: 'flex', justifyContent: 'space-between' }}>
+    <span style={{ fontWeight: 700, color: '#111827' }}>Total project amount</span>
+    <span style={{ fontWeight: 800, color: '#111827', fontSize: '18px' }}>₹{total.toLocaleString('en-IN')}</span>
+  </div>
+</div>
 
         {/* Submit Action Interface Link Generator Button */}
         <button onClick={handleSubmit} disabled={loading}
