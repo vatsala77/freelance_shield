@@ -2,10 +2,11 @@
 
 > India's first milestone-based escrow platform for freelancers. Get paid. Every time.
 
-[![Live Demo](https://img.shields.io/badge/Live%20Demo-Visit%20Site-1D9E75?style=for-the-badge&logo=vercel)](https://freelance-shield-sable.vercel.app/)
+[![Live Demo](https://img.shields.io/badge/Live%20Demo-Visit%20Site-1D9E75?style=for-the-badge&logo=vercel)](https://youtu.be/913ymy50YuA)
 
 
 ---
+
 
 ## 🚨 The Problem
 
@@ -46,6 +47,21 @@ If client ghosts → dispute raised → admin reviews → refund processed
 | **Client** | Open link → Pay via UPI/Card → Review work → Approve & release |
 
 ---
+## 🎥 Watch Demo
+
+<p align="center">
+  <a href="https://youtu.be/913ymy50YuA" target="_blank">
+    <img
+      src="https://img.youtube.com/vi/913ymy50YuA/maxresdefault.jpg"
+      alt="FreelanceShield Demo"
+      width="800"
+    />
+  </a>
+</p>
+
+<p align="center">
+  <strong>▶ Click the thumbnail to watch the 2-minute product walkthrough.</strong>
+</p>
 
 ## ✨ Features
 
