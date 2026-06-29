@@ -24,7 +24,23 @@ export default function Login() {
         body: JSON.stringify({ email, password })
       })
       const data = await res.json()
-      if (!res.ok) { setError(data.error); setLoading(false); return }
+     if (!res.ok) {
+    if (
+        data.error ===
+        "Account already exists. Please sign in to continue."
+    ) {
+        setError(
+            "Account already exists. Please sign in to continue."
+        )
+
+        setIsSignUp(false)
+    } else {
+        setError(data.error)
+    }
+
+    setLoading(false)
+    return
+}
       // Auto login sequences execute seamlessly post configuration validation
     }
 
@@ -33,9 +49,13 @@ export default function Login() {
     })
 
     if (result?.error) {
-      setError('Invalid email or password')
-      return
-    } else {
+    setError(
+        "No account found or the password is incorrect."
+    )
+
+    setLoading(false)
+    return
+} else {
       router.push('/dashboard')
     }
   }

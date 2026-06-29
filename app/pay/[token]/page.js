@@ -5,7 +5,7 @@ import { useSession } from 'next-auth/react'
 import Link from 'next/link'
 import html2canvas from 'html2canvas'
 import jsPDF from 'jspdf'
-
+import Image from 'next/image'
 function loadRazorpayScript() {
   return new Promise((resolve) => {
     if (document.getElementById('razorpay-script')) { resolve(true); return }
@@ -398,12 +398,32 @@ export default function PayPage() {
         }}>
           <Link href="/" style={{ textDecoration: 'none' }} className="brand-logo-container">
             <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
-              <span className="logo-box" style={{
-                background: '#1D9E75', color: 'white', width: '32px', height: '32px',
-                borderRadius: '8px', display: 'flex', alignItems: 'center',
-                justifyContent: 'center', fontWeight: 700, fontSize: 'clamp(13px, 3vw, 15px)',
-                transition: 'all 0.2s ease'
-              }}>F</span>
+             <div
+  className="logo-box"
+  style={{
+    width: '36px',
+    height: '36px',
+    borderRadius: '8px',
+    overflow: 'hidden',
+    display: 'flex',
+    alignItems: 'center',
+    justifyContent: 'center',
+    transition: 'all 0.2s ease'
+  }}
+>
+  <Image
+    src="/logo.png"
+    alt="FreelanceShield Logo"
+    width={36}
+    height={36}
+    priority
+    style={{
+      width: '100%',
+      height: '100%',
+      objectFit: 'contain'
+    }}
+  />
+</div>
               <span className="brand-text" style={{
                 fontWeight: 700, color: '#111827', fontSize: 'clamp(15px, 3.5vw, 18px)',
                 letterSpacing: '-0.02em', transition: 'all 0.2s ease'
@@ -482,7 +502,95 @@ export default function PayPage() {
               ))}
             </div>
           </div>
+{!isFreelancer && (
+  <div
+    style={{
+      background: "linear-gradient(135deg, rgba(29,158,117,0.12), rgba(29,158,117,0.05))",
+      border: "2px solid #1D9E75",
+      borderLeft: "6px solid #1D9E75",
+      borderRadius: "12px",
+      padding: "16px 18px",
+      marginBottom: "8px",
+      fontSize: "clamp(12px, 2.8vw, 14px)",
+      textAlign: "left",
+      boxShadow: "0 4px 12px rgba(29,158,117,0.08)",
+    }}
+  >
+    <p
+      style={{
+        margin: "0 0 10px",
+        fontWeight: 700,
+        color: "#065F46",
+        fontSize: "15px",
+      }}
+    >
+      🚧 SANDBOX / TEST MODE ACTIVE
+    </p>
 
+    <p
+      style={{
+        margin: "0 0 12px",
+        color: "#374151",
+        lineHeight: "1.6",
+      }}
+    >
+      This platform is currently running in <strong>Razorpay Test Mode</strong>. 
+      No real money will be charged. Please note that <strong>UPI or QR Scanning will NOT work</strong> in this test mode environment.
+    </p>
+
+    <div
+      style={{
+        background: "#ECFDF5",
+        border: "1px solid #A7F3D0",
+        borderRadius: "8px",
+        padding: "12px",
+        marginBottom: "10px",
+      }}
+    >
+      <strong style={{ color: "#047857" }}>💡 Recommended Testing Method:</strong>
+      <p style={{ margin: "6px 0 0", color: "#374151", lineHeight: "1.6" }}>
+        On the Razorpay Checkout screen, please select the <strong>EMI</strong> payment 
+        option and choose any dummy bank to easily simulate a successful payment transaction.
+      </p>
+    </div>
+
+    <div
+      style={{
+        background: "#F9FAFB",
+        border: "1px dashed #1D9E75",
+        borderRadius: "8px",
+        padding: "12px",
+      }}
+    >
+      <strong style={{ color: "#047857" }}>
+        💳 Alternative: Use Razorpay Test Card
+      </strong>
+
+      <div
+        style={{
+          marginTop: "8px",
+          lineHeight: "1.8",
+          color: "#374151",
+          fontFamily: "monospace",
+        }}
+      >
+        <div><strong>Card Number:</strong> 4111 1111 1111 1111</div>
+        <div><strong>Expiry:</strong> Any future date (e.g. 12/30)</div>
+        <div><strong>CVV:</strong> 123</div>
+      </div>
+    </div>
+
+    <p
+      style={{
+        margin: "12px 0 0",
+        color: "#6B7280",
+        fontSize: "12px",
+      }}
+    >
+      ⚠️ These are sandbox test credentials only. Standard production payments will be enabled once the platform completes its 1-month beta phase.
+    </p>
+  </div>
+)}
           <div style={{
             background: '#fef2f2',
             borderRadius: '12px',

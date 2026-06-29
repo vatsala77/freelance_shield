@@ -8,8 +8,32 @@ const supabase = createClient(
 
 export async function POST(req) {
   try {
+    //const { email, password } = await req.json()
     const { email, password } = await req.json()
-    
+
+// Check if account already exists
+const { data: usersData, error: usersError } =
+  await supabase.auth.admin.listUsers()
+
+if (usersError) {
+  return NextResponse.json(
+    { error: "Unable to verify account." },
+    { status: 500 }
+  )
+}
+
+const existingUser = usersData.users.find(
+  user => user.email?.toLowerCase() === email.toLowerCase()
+)
+
+if (existingUser) {
+  return NextResponse.json(
+    {
+      error: "Account already exists. Please sign in to continue."
+    },
+    { status: 409 }
+  )
+}
     // Create auth user
     const { data, error } = await supabase.auth.admin.createUser({
       email, password, email_confirm: true

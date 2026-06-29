@@ -4,6 +4,7 @@ import Link from 'next/link'
 import { signOut, useSession } from 'next-auth/react'
 import Footer from './components/Footer' 
 import Image from 'next/image'
+import DemoSection from "./components/DemoSection";
 export default function Home() {
   const { status } = useSession()
   const isLoggedIn = status === 'authenticated'
@@ -277,7 +278,8 @@ export default function Home() {
         </p>
 
       </section>
-
+{/* Demo Section */}
+      <DemoSection />
       {/* How it works section */}
       <section id="how" style={{ maxWidth: '940px', margin: '40px auto', padding: '0 20px' }}>
         <div style={{ 
