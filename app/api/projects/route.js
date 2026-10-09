@@ -1,7 +1,7 @@
 import { NextResponse } from 'next/server'
 import { getServerSession } from 'next-auth/next'
 import { authOptions } from '@/lib/authOptions'
-import { supabaseAdmin } from '@/lib/supabase'
+import { query } from '@/lib/supabase'
 import crypto from 'crypto'
 
 export async function GET(req) {
@@ -12,20 +12,26 @@ export async function GET(req) {
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
     }
 
-    const { data, error } = await supabaseAdmin
-      .from('projects')
-      .select('*, milestones(*)')
-      .eq('freelancer_id', session.user.id)
-      .order('created_at', { ascending: false })
+    // Fetch projects for the freelancer
+    const projectsResult = await query(
+      'SELECT * FROM projects WHERE freelancer_id = \$1 ORDER BY created_at DESC',
+      [session.user.id]
+    )
 
-    if (error) {
-      console.error('Fetch projects error:', error)
-      return NextResponse.json({ error: error.message }, { status: 500 })
+    const projects = projectsResult.rows
+
+    // Fetch milestones for each project so dashboard gets the complete structure
+    for (const project of projects) {
+      const milestonesResult = await query(
+        'SELECT * FROM milestones WHERE project_id = \$1 ORDER BY position ASC',
+        [project.id]
+      )
+      project.milestones = milestonesResult.rows || []
     }
 
-    return NextResponse.json(data || [])
+    return NextResponse.json(projects)
   } catch (err) {
-    console.error('Server error:', err)
+    console.error('Fetch projects error:', err)
     return NextResponse.json({ error: 'Server error' }, { status: 500 })
   }
 }
@@ -39,82 +45,70 @@ export async function POST(req) {
     }
 
     const body = await req.json()
-    console.log('Request body:', JSON.stringify(body))
-
     const { title, client_name, client_email, client_phone, milestones, freelancer_id } = body
 
     if (!title || !client_name || !client_email || !milestones?.length || !freelancer_id) {
       return NextResponse.json({ error: 'Missing required fields' }, { status: 400 })
     }
 
-    // Ensure user exists in users table (create if missing)
-    const { data: userExists } = await supabaseAdmin
-      .from('users')
-      .select('id')
-      .eq('id', freelancer_id)
-      .single()
+    // Ensure user exists in users table
+    const userCheck = await query(
+      'SELECT id FROM users WHERE id = \$1',
+      [freelancer_id]
+    )
 
-    if (!userExists) {
-      await supabaseAdmin
-        .from('users')
-        .insert({
-          id: freelancer_id,
-          email: session.user.email,
-          name: session.user.name || session.user.email.split('@')[0],
-        })
-        .select()
-        .single()
+    if (userCheck.rows.length === 0) {
+      await query(
+        'INSERT INTO users (id, email, name) VALUES (\$1, \$2, \$3)',
+        [freelancer_id, session.user.email, session.user.name || session.user.email.split('@')[0]]
+      )
     }
 
     const total = milestones.reduce((a, m) => a + (Number(m.amount) || 0), 0)
     const invite_token = crypto.randomUUID()
 
-    const { data: project, error: projectError } = await supabaseAdmin
-      .from('projects')
-      .insert({
+    // Insert project
+    const projectResult = await query(
+      `INSERT INTO projects (title, freelancer_id, client_name, client_email, client_phone, freelancer_razorpay_account_id, total_amount_paise, milestone_count, status, invite_token) 
+       VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10) RETURNING *`,
+      [
         title,
         freelancer_id,
         client_name,
         client_email,
-        client_phone: client_phone || null,
-        freelancer_razorpay_account_id: 'pending',
-        total_amount_paise: total * 100,
-        milestone_count: milestones.length,
-        status: 'active',
-        invite_token,
-      })
-      .select()
-      .single()
+        client_phone || null,
+        'pending',
+        total * 100,
+        milestones.length,
+        'active',
+        invite_token
+      ]
+    )
 
-    if (projectError) {
-      console.error('Project insert error:', projectError)
-      return NextResponse.json({ error: projectError.message }, { status: 500 })
-    }
+    const project = projectResult.rows[0]
 
-    const milestoneRows = milestones.map((m, index) => {
-  const amountPaise = Number(m.amount) * 100
-  const feePaise = Math.round(amountPaise * 0.05)
-  const payoutPaise = amountPaise - feePaise
+    // Insert milestones
+    for (let index = 0; index < milestones.length; index++) {
+      const m = milestones[index]
+      const amountPaise = Number(m.amount) * 100
+      const feePaise = Math.round(amountPaise * 0.05)
+      const payoutPaise = amountPaise - feePaise
 
-  return {
-    project_id: project.id,
-    position: index + 1,
-    title: m.title,
-    description: m.description || null,
-    amount_paise: amountPaise,
-    platform_fee_paise: feePaise,
-    freelancer_payout_paise: payoutPaise,
-    due_date: m.due || null,
-    status: 'pending',
-  }
-})
-    const { error: milestoneError } = await supabaseAdmin
-      .from('milestones')
-      .insert(milestoneRows)
-
-    if (milestoneError) {
-      console.error('Milestone insert error:', milestoneError)
-      return NextResponse.json({ error: milestoneError.message }, { status: 500 })
+      await query(
+        `INSERT INTO milestones (project_id, position, title, description, amount_paise, platform_fee_paise, freelancer_payout_paise, due_date, status) 
+         VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9)`,
+        [
+          project.id,
+          index + 1,
+          m.title,
+          m.description || null,
+          amountPaise,
+          feePaise,
+          payoutPaise,
+          m.due || null,
+          'pending'
+        ]
+      )
     }
 
     return NextResponse.json({ invite_token, project_id: project.id })

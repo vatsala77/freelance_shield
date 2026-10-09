@@ -1,64 +1,45 @@
 import { NextResponse } from 'next/server'
-import { createClient } from '@supabase/supabase-js'
-
-const supabase = createClient(
- 'https://hxtwdfjnrkzxtyajczhg.supabase.co',
-  process.env.SUPABASE_SERVICE_ROLE_KEY
-)
+import bcrypt from 'bcryptjs'
+import { query } from '@/lib/supabase'
 
 export async function POST(req) {
   try {
-    //const { email, password } = await req.json()
     const { email, password } = await req.json()
 
-// Check if account already exists
-const { data: usersData, error: usersError } =
-  await supabase.auth.admin.listUsers()
-
-if (usersError) {
-  return NextResponse.json(
-    { error: "Unable to verify account." },
-    { status: 500 }
-  )
-}
-
-const existingUser = usersData.users.find(
-  user => user.email?.toLowerCase() === email.toLowerCase()
-)
-
-if (existingUser) {
-  return NextResponse.json(
-    {
-      error: "Account already exists. Please sign in to continue."
-    },
-    { status: 409 }
-  )
-}
-    // Create auth user
-    const { data, error } = await supabase.auth.admin.createUser({
-      email, password, email_confirm: true
-    })
-    
-    if (error) {
-      return NextResponse.json({ error: error.message }, { status: 400 })
+    if (!email || !password) {
+      return NextResponse.json({ error: 'Email and password required' }, { status: 400 })
     }
 
-    // Also create user profile in users table
-    const { error: profileError } = await supabase
-      .from('users')
-      .insert({
-        id: data.user.id,
-        email: data.user.email,
-        name: data.user.email.split('@')[0],
-      })
-
-    if (profileError) {
-      console.error('Profile creation error:', profileError)
-      // Still return success since auth user was created
-      // The user will be created on first project creation if this fails
+    if (password.length < 6) {
+      return NextResponse.json({ error: 'Password must be at least 6 characters' }, { status: 400 })
     }
 
-    return NextResponse.json({ success: true, user: data.user })
+    // Check if user already exists
+    const existing = await query(
+      'SELECT id FROM users WHERE email = $1',
+      [email.toLowerCase()]
+    )
+
+    if (existing.rows.length > 0) {
+      return NextResponse.json(
+        { error: 'Account already exists. Please sign in to continue.' },
+        { status: 409 }
+      )
+    }
+
+    // Hash password
+    const password_hash = await bcrypt.hash(password, 10)
+    const id = crypto.randomUUID()
+    const name = email.split('@')[0]
+
+    // Insert user
+    await query(
+      'INSERT INTO users (id, email, name, password_hash) VALUES ($1, $2, $3, $4)',
+      [id, email.toLowerCase(), name, password_hash]
+    )
+
+    return NextResponse.json({ success: true, user: { id, email, name } })
+
   } catch (err) {
     console.error('Signup error:', err)
     return NextResponse.json({ error: 'Server error' }, { status: 500 })

@@ -1,47 +1,28 @@
-// import { NextResponse } from 'next/server'
-// import { supabaseAdmin } from '@/lib/supabase'
-
-// export async function GET(req, { params }) {
-//   try {
-//     const { id } = await params
-
-//     const { data: project, error } = await supabaseAdmin
-//       .from('projects')
-//       .select('*, milestones(*)')
-//       .eq('id', id)
-//       .single()
-
-//     if (error || !project) {
-//       return NextResponse.json({ error: 'Project not found' }, { status: 404 })
-//     }
-
-//     project.milestones.sort((a, b) => a.position - b.position)
-
-//     return NextResponse.json(project)
-//   } catch (err) {
-//     console.error('Server error:', err)
-//     return NextResponse.json({ error: 'Server error' }, { status: 500 })
-//   }
-// }
 import { NextResponse } from 'next/server'
-import { supabaseAdmin } from '@/lib/supabase'
+import { query } from '@/lib/supabase'
 
 // 1. GET Handler (Fetch Project Details with Milestones)
 export async function GET(req, { params }) {
   try {
     const { id } = await params
 
-    const { data: project, error } = await supabaseAdmin
-      .from('projects')
-      .select('*, milestones(*)')
-      .eq('id', id)
-      .single()
+    // Fetch the main project
+    const projectResult = await query(
+      'SELECT * FROM projects WHERE id = $1 LIMIT 1',
+      [id]
+    )
+    const project = projectResult.rows[0]
 
-    if (error || !project) {
+    if (!project) {
       return NextResponse.json({ error: 'Project not found' }, { status: 404 })
     }
 
-    project.milestones.sort((a, b) => a.position - b.position)
+    // Fetch associated milestones ordered by position
+    const milestonesResult = await query(
+      'SELECT * FROM milestones WHERE project_id = $1 ORDER BY position ASC',
+      [id]
+    )
+    project.milestones = milestonesResult.rows || []
 
     return NextResponse.json(project)
   } catch (err) {
@@ -56,14 +37,11 @@ export async function DELETE(req, { params }) {
     const { id } = await params // URL parameter se dynamic project ID nikala
 
     // Step A: Current project ke saare milestones ka real-time status fetch karo
-    const { data: milestones, error: fetchError } = await supabaseAdmin
-      .from('milestones')
-      .select('status')
-      .eq('project_id', id)
-
-    if (fetchError) {
-      return NextResponse.json({ error: "Failed to verify milestones context" }, { status: 500 })
-    }
+    const milestonesResult = await query(
+      'SELECT status FROM milestones WHERE project_id = $1',
+      [id]
+    )
+    const milestones = milestonesResult.rows
 
     // Step B: AIRTIGHT ESCROW SAFETY GUARD (Added 'disputed' and 'Disputed' strings)
     // Agar escrow me real paisa lock hai ya ongoing dispute chal raha hai, toh entry BLOCK ho jayegi
@@ -80,47 +58,16 @@ export async function DELETE(req, { params }) {
     // Step C: Relational Integrity Cleanup Sequence (Only triggers if all milestones are untouched/pending)
 
     // 1. Clear activity logs history references first
-    const { error: activityDelError } = await supabaseAdmin
-      .from('activity_log')
-      .delete()
-      .eq('project_id', id)
-
-    if (activityDelError) {
-      console.error('Failed to clear activity logs:', activityDelError)
-      return NextResponse.json({ error: "Failed to clear linked activity logs references" }, { status: 500 })
-    }
+    await query('DELETE FROM activity_log WHERE project_id = $1', [id])
 
     // 2. Clear empty/mock disputes context safely
-    const { error: disputeDelError } = await supabaseAdmin
-      .from('disputes')
-      .delete()
-      .eq('project_id', id)
-
-    if (disputeDelError) {
-      console.error('Failed to clear linked disputes:', disputeDelError)
-      return NextResponse.json({ error: "Failed to clear linked disputes relational references" }, { status: 500 })
-    }
+    await query('DELETE FROM disputes WHERE project_id = $1', [id])
 
     // 3. Clear pending milestones references
-    const { error: milestoneDelError } = await supabaseAdmin
-      .from('milestones')
-      .delete()
-      .eq('project_id', id)
-
-    if (milestoneDelError) {
-      console.error('Failed to clear milestones:', milestoneDelError)
-      return NextResponse.json({ error: "Failed to clear linked milestones context" }, { status: 500 })
-    }
+    await query('DELETE FROM milestones WHERE project_id = $1', [id])
 
     // Step D: Now safely delete the parent record from "projects" table
-    const { error: projectDelError } = await supabaseAdmin
-      .from('projects')
-      .delete()
-      .eq('id', id)
-
-    if (projectDelError) {
-      return NextResponse.json({ error: projectDelError.message }, { status: 500 })
-    }
+    await query('DELETE FROM projects WHERE id = $1', [id])
 
     return NextResponse.json({ success: true, message: "Project agreement configuration safely purged from database." })
 

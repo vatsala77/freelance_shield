@@ -1,6 +1,6 @@
 import { NextResponse } from 'next/server'
 import { razorpay } from '@/lib/razorpay'
-import { supabaseAdmin } from '@/lib/supabase'
+import { query } from '@/lib/supabase'
 
 export async function POST(req) {
   try {
@@ -10,21 +10,33 @@ export async function POST(req) {
       return NextResponse.json({ error: 'Missing fields' }, { status: 400 })
     }
 
-    const { data: project, error } = await supabaseAdmin
-      .from('projects')
-      .select('*, milestones(*)')
-      .eq('id', project_id)
-      .single()
+    // 1. Fetch the project details
+    const projectResult = await query(
+      'SELECT * FROM projects WHERE id = \$1 LIMIT 1',
+      [project_id]
+    )
+    const project = projectResult.rows[0]
 
-    if (error) return NextResponse.json({ error: 'Project not found' }, { status: 404 })
+    if (!project) {
+      return NextResponse.json({ error: 'Project not found' }, { status: 404 })
+    }
 
-    const milestone = project.milestones.find(m => m.id === milestone_id)
-    if (!milestone) return NextResponse.json({ error: 'Milestone not found' }, { status: 404 })
+    // 2. Fetch the specific milestone details
+    const milestoneResult = await query(
+      'SELECT * FROM milestones WHERE id = \$1 AND project_id = \$2 LIMIT 1',
+      [milestone_id, project_id]
+    )
+    const milestone = milestoneResult.rows[0]
 
+    if (!milestone) {
+      return NextResponse.json({ error: 'Milestone not found' }, { status: 404 })
+    }
+
+    // 3. Create Razorpay order
     const order = await razorpay.orders.create({
       amount: milestone.amount_paise,
       currency: 'INR',
-      receipt: `m_${milestone_id.slice(0, 30)}`,
+      receipt: `m_${milestone_id.toString().slice(0, 30)}`,
       notes: {
         milestone_id,
         project_id,
@@ -32,10 +44,11 @@ export async function POST(req) {
       },
     })
 
-    await supabaseAdmin
-      .from('milestones')
-      .update({ razorpay_order_id: order.id })
-      .eq('id', milestone_id)
+    // 4. Update the milestone with the new razorpay_order_id
+    await query(
+      'UPDATE milestones SET razorpay_order_id = \$1 WHERE id = \$2',
+      [order.id, milestone_id]
+    )
 
     return NextResponse.json({
       order_id: order.id,
@@ -46,7 +59,7 @@ export async function POST(req) {
       client_email: project.client_email,
     })
   } catch (err) {
-    console.error(err)
+    console.error('Create order error:', err)
     return NextResponse.json({ error: 'Failed to create order' }, { status: 500 })
   }
 }

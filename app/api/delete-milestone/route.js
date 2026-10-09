@@ -1,5 +1,5 @@
 import { NextResponse } from 'next/server'
-import { supabaseAdmin } from '@/lib/supabase'
+import { query } from '@/lib/supabase'
 
 export async function POST(req) {
   try {
@@ -10,13 +10,14 @@ export async function POST(req) {
     }
 
     // 1. Database Check: Pehle real-time status pata karo milestone ka
-    const { data: milestone, error: fetchError } = await supabaseAdmin
-      .from('milestones')
-      .select('status')
-      .eq('id', milestone_id)
-      .single()
+    const fetchResult = await query(
+      'SELECT status FROM milestones WHERE id = $1 LIMIT 1',
+      [milestone_id]
+    )
+    
+    const milestone = fetchResult.rows[0]
 
-    if (fetchError || !milestone) {
+    if (!milestone) {
       return NextResponse.json({ error: 'Milestone not found in database' }, { status: 404 })
     }
 
@@ -28,14 +29,10 @@ export async function POST(req) {
     }
 
     // 3. Database Delete Action: Agar safe hai (yani status pending hai), toh delete udao
-    const { error: deleteError } = await supabaseAdmin
-      .from('milestones')
-      .delete()
-      .eq('id', milestone_id)
-
-    if (deleteError) {
-      return NextResponse.json({ error: deleteError.message }, { status: 500 })
-    }
+    await query(
+      'DELETE FROM milestones WHERE id = $1',
+      [milestone_id]
+    )
 
     return NextResponse.json({ success: true, message: 'Milestone successfully deleted from database' })
 
