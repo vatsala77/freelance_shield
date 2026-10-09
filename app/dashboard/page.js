@@ -5,6 +5,7 @@ import { signOut, useSession } from 'next-auth/react'
 import { useRouter } from 'next/navigation'
 import Footer from '../components/Footer' 
 import Image from "next/image";
+
 export default function Dashboard() {
   const router = useRouter()
   const { data: session, status } = useSession()
@@ -49,6 +50,10 @@ export default function Dashboard() {
 
     fetchProjects()
   }, [status, router])
+
+  // Always compute the project total from milestones so a corrupted stored total never reaches the UI
+  const getProjectTotalPaise = (p) =>
+    (p.milestones || []).reduce((sum, m) => sum + Number(m.amount_paise || 0), 0)
 
   const filtered = projects.filter(p => {
     const matchesStatus = filter === 'all' || p.status === filter
@@ -125,7 +130,7 @@ export default function Dashboard() {
     .reduce((sum, p) => {
       return sum + (p.milestones?.reduce((mSum, m) => {
         if (['funded', 'submitted', 'changes_requested', 'disputed', 'Disputed'].includes(m.status)) {
-          return mSum + (m.amount_paise / 100)
+          return mSum + (Number(m.amount_paise || 0) / 100)
         }
         return mSum
       }, 0) || 0)
@@ -136,7 +141,7 @@ export default function Dashboard() {
     .reduce((sum, p) => {
       return sum + (p.milestones?.reduce((mSum, m) => {
         if (m.status === 'released') {
-          return mSum + (m.amount_paise / 100)
+          return mSum + (Number(m.amount_paise || 0) / 100)
         }
         return mSum
       }, 0) || 0)
@@ -175,32 +180,32 @@ export default function Dashboard() {
         }}>
           <Link href="/" style={{ textDecoration: 'none' }} className="brand-logo-container">
             <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
-            <div
-  className="logo-box"
-  style={{
-    width: '36px',
-    height: '36px',
-    borderRadius: '8px',
-    overflow: 'hidden',
-    display: 'flex',
-    alignItems: 'center',
-    justifyContent: 'center',
-    transition: 'all 0.2s ease'
-  }}
->
-  <Image
-    src="/logo.png"
-    alt="FreelanceShield Logo"
-    width={36}
-    height={36}
-    priority
-    style={{
-      width: '100%',
-      height: '100%',
-      objectFit: 'contain'
-    }}
-  />
-</div>
+              <div
+                className="logo-box"
+                style={{
+                  width: '36px',
+                  height: '36px',
+                  borderRadius: '8px',
+                  overflow: 'hidden',
+                  display: 'flex',
+                  alignItems: 'center',
+                  justifyContent: 'center',
+                  transition: 'all 0.2s ease'
+                }}
+              >
+                <Image
+                  src="/logo.png"
+                  alt="FreelanceShield Logo"
+                  width={36}
+                  height={36}
+                  priority
+                  style={{
+                    width: '100%',
+                    height: '100%',
+                    objectFit: 'contain'
+                  }}
+                />
+              </div>
               <span className="brand-text" style={{ 
                 fontWeight: 700, color: '#111827', fontSize: 'clamp(15px, 3.5vw, 18px)', 
                 letterSpacing: '-0.02em', transition: 'all 0.2s ease' 
@@ -379,7 +384,7 @@ export default function Dashboard() {
 
                   <div style={{ display: 'flex', alignItems: 'center', gap: '10px', flexWrap: 'wrap', width: '100%', justifyContent: 'flex-start' }} className="project-actions-wrap">
                     <span style={{ fontWeight: 800, color: '#111827', fontSize: 'clamp(15px, 3.6vw, 17px)', marginRight: '4px' }}>
-                      ₹{(p.total_amount_paise / 100).toLocaleString('en-IN')}
+                      ₹{(getProjectTotalPaise(p) / 100).toLocaleString('en-IN')}
                     </span>
                     <Link href={`/project/${p.id}`}>
                       <button style={{ background: '#1D9E75', border: 'none', color: 'white', padding: 'clamp(6px, 1.8vw, 8px) clamp(12px, 3vw, 16px)', borderRadius: '8px', cursor: 'pointer', fontSize: 'clamp(12px, 2.8vw, 13px)', fontWeight: 600 }}>
@@ -429,7 +434,7 @@ export default function Dashboard() {
                     <div key={m.id} style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: '12px 0', borderBottom: '1px solid rgba(0,0,0,0.04)', flexWrap: 'wrap', gap: '8px' }}>
                       <div>
                         <span style={{ fontSize: 'clamp(13px, 3vw, 14px)', color: '#111827', fontWeight: 600 }}>{m.title}</span>
-                        <span style={{ fontSize: 'clamp(12px, 2.8vw, 13px)', color: '#4b5563', marginLeft: '8px', fontWeight: 500 }}>₹{(m.amount_paise / 100).toLocaleString('en-IN')}</span>
+                        <span style={{ fontSize: 'clamp(12px, 2.8vw, 13px)', color: '#4b5563', marginLeft: '8px', fontWeight: 500 }}>₹{(Number(m.amount_paise || 0) / 100).toLocaleString('en-IN')}</span>
                       </div>
                       
                       <div>
